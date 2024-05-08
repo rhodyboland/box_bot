@@ -1,3 +1,0 @@
-[console_scripts]
-magnetometer_node = py_magnetometer_driver.magnetometer_node:main
-
