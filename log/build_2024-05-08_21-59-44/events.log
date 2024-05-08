@@ -1,0 +1,149 @@
+[0.000000] (-) TimerEvent: {}
+[0.001452] (py_magnetometer_driver) JobQueued: {'identifier': 'py_magnetometer_driver', 'dependencies': OrderedDict()}
+[0.002697] (py_magnetometer_driver) JobStarted: {'identifier': 'py_magnetometer_driver'}
+[0.099112] (-) TimerEvent: {}
+[0.200452] (-) TimerEvent: {}
+[0.301479] (-) TimerEvent: {}
+[0.402384] (-) TimerEvent: {}
+[0.503380] (-) TimerEvent: {}
+[0.604538] (-) TimerEvent: {}
+[0.705254] (-) TimerEvent: {}
+[0.806035] (-) TimerEvent: {}
+[0.906783] (-) TimerEvent: {}
+[1.008520] (-) TimerEvent: {}
+[1.119901] (-) TimerEvent: {}
+[1.223060] (-) TimerEvent: {}
+[1.325515] (-) TimerEvent: {}
+[1.428356] (-) TimerEvent: {}
+[1.531316] (-) TimerEvent: {}
+[1.632725] (-) TimerEvent: {}
+[1.733604] (-) TimerEvent: {}
+[1.834518] (-) TimerEvent: {}
+[1.935898] (-) TimerEvent: {}
+[2.036897] (-) TimerEvent: {}
+[2.138162] (-) TimerEvent: {}
+[2.238916] (-) TimerEvent: {}
+[2.339642] (-) TimerEvent: {}
+[2.440483] (-) TimerEvent: {}
+[2.541378] (-) TimerEvent: {}
+[2.642222] (-) TimerEvent: {}
+[2.743095] (-) TimerEvent: {}
+[2.843927] (-) TimerEvent: {}
+[2.944664] (-) TimerEvent: {}
+[3.045658] (-) TimerEvent: {}
+[3.147230] (-) TimerEvent: {}
+[3.249253] (-) TimerEvent: {}
+[3.350430] (-) TimerEvent: {}
+[3.451280] (-) TimerEvent: {}
+[3.552476] (-) TimerEvent: {}
+[3.653803] (-) TimerEvent: {}
+[3.756342] (-) TimerEvent: {}
+[3.857237] (-) TimerEvent: {}
+[3.958216] (-) TimerEvent: {}
+[4.064340] (-) TimerEvent: {}
+[4.166699] (-) TimerEvent: {}
+[4.267646] (-) TimerEvent: {}
+[4.369757] (-) TimerEvent: {}
+[4.473054] (-) TimerEvent: {}
+[4.576038] (-) TimerEvent: {}
+[4.677775] (-) TimerEvent: {}
+[4.779273] (-) TimerEvent: {}
+[4.881527] (-) TimerEvent: {}
+[4.982753] (-) TimerEvent: {}
+[5.083728] (-) TimerEvent: {}
+[5.184801] (-) TimerEvent: {}
+[5.288538] (-) TimerEvent: {}
+[5.389746] (-) TimerEvent: {}
+[5.490642] (-) TimerEvent: {}
+[5.591408] (-) TimerEvent: {}
+[5.692202] (-) TimerEvent: {}
+[5.792983] (-) TimerEvent: {}
+[5.893881] (-) TimerEvent: {}
+[5.994828] (-) TimerEvent: {}
+[6.096139] (-) TimerEvent: {}
+[6.197538] (-) TimerEvent: {}
+[6.298499] (-) TimerEvent: {}
+[6.399413] (-) TimerEvent: {}
+[6.500358] (-) TimerEvent: {}
+[6.601190] (-) TimerEvent: {}
+[6.702184] (-) TimerEvent: {}
+[6.803312] (-) TimerEvent: {}
+[6.904297] (-) TimerEvent: {}
+[7.005131] (-) TimerEvent: {}
+[7.106088] (-) TimerEvent: {}
+[7.206988] (-) TimerEvent: {}
+[7.308111] (-) TimerEvent: {}
+[7.411021] (-) TimerEvent: {}
+[7.512625] (-) TimerEvent: {}
+[7.537356] (py_magnetometer_driver) Command: {'cmd': ['/usr/bin/python3', 'setup.py', 'egg_info', '--egg-base', '../../build/py_magnetometer_driver', 'build', '--build-base', '/home/rhody/ros2_dev/build/py_magnetometer_driver/build', 'install', '--record', '/home/rhody/ros2_dev/build/py_magnetometer_driver/install.log', '--single-version-externally-managed'], 'cwd': '/home/rhody/ros2_dev/src/py_magnetometer_driver', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'LANGUAGE': 'en_AU:en', 'USER': 'rhody', 'SSH_CLIENT': '192.168.1.223 42234 22', 'XDG_SESSION_TYPE': 'tty', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'MOTD_SHOWN': 'pam', 'HOME': '/home/rhody', 'OLDPWD': '/home/rhody/ros2_dev/src', 'SSH_TTY': '/dev/pts/3', 'ROS_PYTHON_VERSION': '3', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'ROS_DISTRO': 'humble', 'LOGNAME': 'rhody', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '4', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/rhody/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': 'localhost:11.0', 'LANG': 'en_US.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'AMENT_PREFIX_PATH': '/opt/ros/humble', 'SHELL': '/bin/bash', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'PWD': '/home/rhody/ros2_dev/build/py_magnetometer_driver', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.1.223 42234 192.168.1.193 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/rhody/ros2_dev/build/py_magnetometer_driver/prefix_override:/home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'COLCON': '1'}, 'shell': False}
+[7.612928] (-) TimerEvent: {}
+[7.714988] (-) TimerEvent: {}
+[7.815895] (-) TimerEvent: {}
+[7.916681] (-) TimerEvent: {}
+[8.017880] (-) TimerEvent: {}
+[8.121276] (-) TimerEvent: {}
+[8.222509] (-) TimerEvent: {}
+[8.325595] (-) TimerEvent: {}
+[8.427192] (-) TimerEvent: {}
+[8.529695] (-) TimerEvent: {}
+[8.631586] (-) TimerEvent: {}
+[8.733686] (-) TimerEvent: {}
+[8.836086] (-) TimerEvent: {}
+[8.937809] (-) TimerEvent: {}
+[9.039363] (-) TimerEvent: {}
+[9.140338] (-) TimerEvent: {}
+[9.241349] (-) TimerEvent: {}
+[9.342701] (-) TimerEvent: {}
+[9.445583] (-) TimerEvent: {}
+[9.546726] (-) TimerEvent: {}
+[9.648188] (-) TimerEvent: {}
+[9.749136] (-) TimerEvent: {}
+[9.850355] (-) TimerEvent: {}
+[9.919422] (py_magnetometer_driver) StdoutLine: {'line': b'running egg_info\n'}
+[9.922378] (py_magnetometer_driver) StdoutLine: {'line': b'creating ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info\n'}
+[9.923453] (py_magnetometer_driver) StdoutLine: {'line': b'writing ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/PKG-INFO\n'}
+[9.924967] (py_magnetometer_driver) StdoutLine: {'line': b'writing dependency_links to ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/dependency_links.txt\n'}
+[9.926000] (py_magnetometer_driver) StdoutLine: {'line': b'writing entry points to ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/entry_points.txt\n'}
+[9.927853] (py_magnetometer_driver) StdoutLine: {'line': b'writing requirements to ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/requires.txt\n'}
+[9.928532] (py_magnetometer_driver) StdoutLine: {'line': b'writing top-level names to ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/top_level.txt\n'}
+[9.936834] (py_magnetometer_driver) StdoutLine: {'line': b"writing manifest file '../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/SOURCES.txt'\n"}
+[9.942840] (py_magnetometer_driver) StdoutLine: {'line': b"reading manifest file '../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/SOURCES.txt'\n"}
+[9.951671] (py_magnetometer_driver) StdoutLine: {'line': b"writing manifest file '../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info/SOURCES.txt'\n"}
+[9.959750] (-) TimerEvent: {}
+[9.963716] (py_magnetometer_driver) StdoutLine: {'line': b'running build\n'}
+[9.967693] (py_magnetometer_driver) StdoutLine: {'line': b'running build_py\n'}
+[9.970919] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/build/py_magnetometer_driver/build\n'}
+[9.973981] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/build/py_magnetometer_driver/build/lib\n'}
+[9.977644] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/build/py_magnetometer_driver/build/lib/py_magnetometer_driver\n'}
+[9.984589] (py_magnetometer_driver) StdoutLine: {'line': b'copying py_magnetometer_driver/magnetometer_node.py -> /home/rhody/ros2_dev/build/py_magnetometer_driver/build/lib/py_magnetometer_driver\n'}
+[9.991805] (py_magnetometer_driver) StdoutLine: {'line': b'copying py_magnetometer_driver/__init__.py -> /home/rhody/ros2_dev/build/py_magnetometer_driver/build/lib/py_magnetometer_driver\n'}
+[9.995085] (py_magnetometer_driver) StdoutLine: {'line': b'running install\n'}
+[9.998995] (py_magnetometer_driver) StdoutLine: {'line': b'running install_lib\n'}
+[10.002077] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages/py_magnetometer_driver\n'}
+[10.005175] (py_magnetometer_driver) StdoutLine: {'line': b'copying /home/rhody/ros2_dev/build/py_magnetometer_driver/build/lib/py_magnetometer_driver/magnetometer_node.py -> /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages/py_magnetometer_driver\n'}
+[10.008431] (py_magnetometer_driver) StdoutLine: {'line': b'copying /home/rhody/ros2_dev/build/py_magnetometer_driver/build/lib/py_magnetometer_driver/__init__.py -> /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages/py_magnetometer_driver\n'}
+[10.011956] (py_magnetometer_driver) StdoutLine: {'line': b'byte-compiling /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages/py_magnetometer_driver/magnetometer_node.py to magnetometer_node.cpython-310.pyc\n'}
+[10.015665] (py_magnetometer_driver) StdoutLine: {'line': b'byte-compiling /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages/py_magnetometer_driver/__init__.py to __init__.cpython-310.pyc\n'}
+[10.019310] (py_magnetometer_driver) StdoutLine: {'line': b'running install_data\n'}
+[10.022675] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/install/py_magnetometer_driver/share/ament_index\n'}
+[10.025968] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/install/py_magnetometer_driver/share/ament_index/resource_index\n'}
+[10.029480] (py_magnetometer_driver) StdoutLine: {'line': b'creating /home/rhody/ros2_dev/install/py_magnetometer_driver/share/ament_index/resource_index/packages\n'}
+[10.033070] (py_magnetometer_driver) StdoutLine: {'line': b'copying resource/py_magnetometer_driver -> /home/rhody/ros2_dev/install/py_magnetometer_driver/share/ament_index/resource_index/packages\n'}
+[10.036854] (py_magnetometer_driver) StdoutLine: {'line': b'copying package.xml -> /home/rhody/ros2_dev/install/py_magnetometer_driver/share/py_magnetometer_driver\n'}
+[10.040827] (py_magnetometer_driver) StdoutLine: {'line': b'running install_egg_info\n'}
+[10.044769] (py_magnetometer_driver) StdoutLine: {'line': b'Copying ../../build/py_magnetometer_driver/py_magnetometer_driver.egg-info to /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/python3.10/site-packages/py_magnetometer_driver-0.0.0-py3.10.egg-info\n'}
+[10.049762] (py_magnetometer_driver) StdoutLine: {'line': b'running install_scripts\n'}
+[10.059949] (-) TimerEvent: {}
+[10.118502] (py_magnetometer_driver) StdoutLine: {'line': b'Installing magnetometer_node script to /home/rhody/ros2_dev/install/py_magnetometer_driver/lib/py_magnetometer_driver\n'}
+[10.124578] (py_magnetometer_driver) StdoutLine: {'line': b"writing list of installed files to '/home/rhody/ros2_dev/build/py_magnetometer_driver/install.log'\n"}
+[10.160320] (-) TimerEvent: {}
+[10.263474] (-) TimerEvent: {}
+[10.340204] (py_magnetometer_driver) CommandEnded: {'returncode': 0}
+[10.363650] (-) TimerEvent: {}
+[10.464903] (-) TimerEvent: {}
+[10.567002] (-) TimerEvent: {}
+[10.668610] (-) TimerEvent: {}
+[10.769929] (-) TimerEvent: {}
+[10.872908] (-) TimerEvent: {}
+[10.924923] (py_magnetometer_driver) JobEnded: {'identifier': 'py_magnetometer_driver', 'rc': 0}
+[10.929558] (-) EventReactorShutdown: {}
