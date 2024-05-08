@@ -1,0 +1,6 @@
+[submodule "src/hoverboard_ros2_control"]
+	path = src/hoverboard_ros2_control
+	url = git@github.com:rhodyboland/hoverboard_ros2_control.git
+[submodule "src/sllidar_ros2"]
+	path = src/sllidar_ros2
+	url = git@github.com:rhodyboland/sllidar_ros2.git
