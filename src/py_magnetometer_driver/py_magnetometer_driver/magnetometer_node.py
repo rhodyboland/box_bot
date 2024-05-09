@@ -22,11 +22,22 @@ class MagnetometerNode(Node):
         self.publisher_.publish(mag_msg)
         sleep_ms(100)  # Regulate the loop speed as needed
 
+    def on_shutdown(self):
+        self.get_logger().info('Node is shutting down...')
+        # Clean up code here, stop timers, release resources, etc.
+
 def main(args=None):
     rclpy.init(args=args)
     magnetometer_node = MagnetometerNode()
-    rclpy.spin(magnetometer_node)
-    rclpy.shutdown()
+    
+    rclpy.on_shutdown(magnetometer_node.on_shutdown)
+    try:
+        rclpy.spin(magnetometer_node)
+    except KeyboardInterrupt:
+        magnetometer_node.get_logger().info('Keyboard interrupt, shutting down...')
+    finally:
+        magnetometer_node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
