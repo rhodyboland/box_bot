@@ -4,3 +4,6 @@
 [submodule "src/sllidar_ros2"]
 	path = src/sllidar_ros2
 	url = git@github.com:rhodyboland/sllidar_ros2.git
+[submodule "src/py_qmc6310_driver"]
+	path = src/py_qmc6310_driver
+	url = git@github.com:rhodyboland/py_qmc6310_driver.git
