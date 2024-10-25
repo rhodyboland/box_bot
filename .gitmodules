@@ -1,9 +1,6 @@
-[submodule "src/hoverboard_ros2_control"]
-	path = src/hoverboard_ros2_control
-	url = git@github.com:rhodyboland/hoverboard_ros2_control.git
 [submodule "src/sllidar_ros2"]
 	path = src/sllidar_ros2
 	url = git@github.com:rhodyboland/sllidar_ros2.git
-[submodule "src/py_qmc6310_driver"]
-	path = src/py_qmc6310_driver
-	url = git@github.com:rhodyboland/py_qmc6310_driver.git
+[submodule "src/dual_motor_hat_ROS2"]
+	path = src/dual_motor_hat_ROS2
+	url = git@github.com:rhodyboland/dual_motor_hat_ROS2.git
