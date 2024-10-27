@@ -9,4 +9,4 @@ sllidar_ros2:
 https://github.com/Slamtec/sllidar_ros2
 
 dfrobot motor driver hat interface:
-https://github.com/rhodyboland/dual_motor_hat_ROS2
+https://github.com/rhodyboland/dfrobot_dc_motor_hardware
