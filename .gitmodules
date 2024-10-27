@@ -1,6 +1,6 @@
 [submodule "src/sllidar_ros2"]
 	path = src/sllidar_ros2
 	url = git@github.com:rhodyboland/sllidar_ros2.git
-[submodule "src/dual_motor_hat_ROS2"]
-	path = src/dual_motor_hat_ROS2
-	url = git@github.com:rhodyboland/dual_motor_hat_ROS2.git
+[submodule "src/dfrobot_dc_motor_hardware"]
+	path = src/dfrobot_dc_motor_hardware
+	url = https://github.com/rhodyboland/dfrobot_dc_motor_hardware
