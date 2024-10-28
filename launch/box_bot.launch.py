@@ -9,21 +9,14 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 PathJoinSubstitution([
-                    FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py'
-                ])
-            ])
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
-                PathJoinSubstitution([
-                    FindPackageShare('py_qmc6310_driver'), 'launch', 'qmc6310.launch.py'
+                    FindPackageShare('dfrobot_dc_motor_hardware'), 'launch', 'dfrobot_dc_motor.launch.py'
                 ])
             ])
         ),
         # IncludeLaunchDescription(
         #     PythonLaunchDescriptionSource([
         #         PathJoinSubstitution([
-        #             FindPackageShare('nmea_navsat_driver'), 'launch', 'nmea_serial_driver.launch.py'
+        #             FindPackageShare('py_qmc6310_driver'), 'launch', 'qmc6310.launch.py'
         #         ])
         #     ])
         # ),
