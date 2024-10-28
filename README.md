@@ -1,7 +1,17 @@
 # box_bot
 Micro metal indoor ros2 robot
 ```
-git clone -b micro_indoor --recurse-submodules git@github.com:rhodyboland/box_bot.git
+git clone -b micro-indoor --recurse-submodules git@github.com:rhodyboland/box_bot.git
+```
+After checking out a different branch:
+```
+git submodule update --init --recursive
+```
+
+If git gets angry about a submodule after checking out:
+```
+git fetch --all
+git reset --hard origin/micro-indoor
 ```
 # packages:
 
