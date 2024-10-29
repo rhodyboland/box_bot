@@ -2,5 +2,6 @@
     "files.associations": {
         "cstring": "cpp",
         "iostream": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/rhody/box_bot/src/dfrobot_dc_motor_hardware"
 }
