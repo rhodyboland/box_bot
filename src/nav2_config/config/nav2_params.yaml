@@ -1,6 +1,6 @@
 # ros2 launch articubot_one navigation_launch.py use_sim_time:=false
 
-# ros2 launch slam_toolbox online_async_launch.py params-file:=./articubot_one/config/mapper_params_online_async.yaml 
+# ros2 launch slam_toolbox online_async_launch.py slam_params_file:="./articubot_one/config/mapper_params_online_async.yaml"
 
 # ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -p frame_id:='base_link'
 
