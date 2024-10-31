@@ -1,9 +1,4 @@
 {
-    "files.associations": {
-        "cstring": "cpp",
-        "iostream": "cpp"
-    },
-    "cmake.sourceDirectory": "/home/rhody/box_bot/src/dfrobot_dc_motor_hardware",
     "python.autoComplete.extraPaths": [
         "/opt/ros/jazzy/lib/python3.12/site-packages"
     ],
