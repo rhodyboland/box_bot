@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
@@ -21,7 +21,7 @@ def generate_launch_description():
     ekf_config = os.path.join(pkg_share, 'config', 'ekf.yaml')
 
     return LaunchDescription([
-        # Your existing nodes
+        # ROS2 Control launch
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 PathJoinSubstitution([
@@ -29,12 +29,31 @@ def generate_launch_description():
                 ])
             ])
         ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
-                PathJoinSubstitution([
-                    FindPackageShare('sllidar_ros2'), 'launch', 'sllidar_c1_launch.py'
-                ])
-            ])
+        # Delayed LIDAR launch
+        TimerAction(
+            period=5.0,  # Delay in seconds
+            actions=[
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        PathJoinSubstitution([
+                            FindPackageShare('sllidar_ros2'), 'launch', 'sllidar_c1_launch.py'
+                        ])
+                    ])
+                )
+            ]
+        ),
+        # Delayed SLAM launch
+        TimerAction(
+            period=15.0,  # Delay in seconds
+            actions=[
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        PathJoinSubstitution([
+                            FindPackageShare('nav2_launcher'), 'launch', 'online_async_launch.py'
+                        ])
+                    ])
+                )
+            ]
         ),
         # ICM20948 IMU node
         Node(
@@ -44,7 +63,7 @@ def generate_launch_description():
             parameters=[
                 {"i2c_address": 0x69},
                 {"frame_id": "imu_link"},
-                {"pub_rate": 50},
+                {"pub_rate": 30},
             ],
         ),
         # Add IMU Filter Madgwick
@@ -74,7 +93,7 @@ def generate_launch_description():
         #         ('imu/data', 'imu/data'),
         #     ],
         # ),
-        # Add robot_localization node
+        # robot_localization node
         Node(
             package='robot_localization',
             executable='ekf_node',
@@ -82,4 +101,5 @@ def generate_launch_description():
             output='screen',
             parameters=[ekf_config]
         )
+
     ])
