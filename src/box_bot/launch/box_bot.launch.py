@@ -44,7 +44,7 @@ def generate_launch_description():
         ),
         # Delayed SLAM launch
         TimerAction(
-            period=15.0,  # Delay in seconds
+            period=10.0,  # Delay in seconds
             actions=[
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource([
@@ -63,7 +63,7 @@ def generate_launch_description():
             parameters=[
                 {"i2c_address": 0x69},
                 {"frame_id": "imu_link"},
-                {"pub_rate": 30},
+                {"pub_rate": 50},
             ],
         ),
         # Add IMU Filter Madgwick
