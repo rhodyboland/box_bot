@@ -1,5 +1,5 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription, TimerAction, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
@@ -21,6 +21,14 @@ def generate_launch_description():
     ekf_config = os.path.join(pkg_share, 'config', 'ekf.yaml')
 
     return LaunchDescription([
+        # New icm node
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare('icm_20948'), 'launch', 'icm_20948_launch.py'
+                ])
+            ])
+        ),
         # ROS2 Control launch
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
@@ -55,17 +63,18 @@ def generate_launch_description():
                 )
             ]
         ),
-        # ICM20948 IMU node
-        Node(
-            package="ros2_icm20948",
-            executable="icm20948_node",
-            name="icm20948_node",
-            parameters=[
-                {"i2c_address": 0x69},
-                {"frame_id": "imu_link"},
-                {"pub_rate": 50},
-            ],
-        ),
+        # Old ICM20948 IMU node
+        # Node(
+        #     package="ros2_icm20948",
+        #     executable="icm20948_node",
+        #     name="icm20948_node",
+        #     parameters=[
+        #         {"i2c_address": 0x69},
+        #         {"frame_id": "imu_link"},
+        #         {"pub_rate": 50},
+        #     ],
+        # ),
+
         # Add IMU Filter Madgwick
         # Node(
         #     package='imu_filter_madgwick',
