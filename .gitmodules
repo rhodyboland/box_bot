@@ -4,3 +4,6 @@
 [submodule "src/dfrobot_dc_motor_hardware"]
 	path = src/dfrobot_dc_motor_hardware
 	url = https://github.com/rhodyboland/dfrobot_dc_motor_hardware
+[submodule "src/icm_20948"]
+	path = src/icm_20948
+	url = git@github.com:rhodyboland/icm_20948.git
