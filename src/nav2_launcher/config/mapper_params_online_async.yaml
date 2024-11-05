@@ -21,8 +21,8 @@ slam_toolbox:
     # if you'd like to immediately start continuing a map at a given pose
     # or at the dock, but they are mutually exclusive, if pose is given
     # will use pose
-    map_file_name: /home/rhody/box_bot/src/nav2_launcher/config/office_map.yaml
-    map_start_pose: [-1.66115, 0.301541, 0.0361573]  # [x, y, theta]
+    # map_file_name: /home/rhody/box_bot/src/nav2_launcher/config/office_map.yaml
+    # map_start_pose: [-1.66115, 0.301541, 0.0361573]  # [x, y, theta]
     map_start_at_dock: true
 
     debug_logging: false

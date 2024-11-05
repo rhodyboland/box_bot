@@ -25,7 +25,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 PathJoinSubstitution([
-                    FindPackageShare('icm_20948'), 'launch', 'icm_20948_launch.py'
+                    FindPackageShare('icm_20948'), 'launch', 'icm_20948.launch.py'
                 ])
             ])
         ),
@@ -63,18 +63,6 @@ def generate_launch_description():
                 )
             ]
         ),
-        # Old ICM20948 IMU node
-        # Node(
-        #     package="ros2_icm20948",
-        #     executable="icm20948_node",
-        #     name="icm20948_node",
-        #     parameters=[
-        #         {"i2c_address": 0x69},
-        #         {"frame_id": "imu_link"},
-        #         {"pub_rate": 50},
-        #     ],
-        # ),
-
         # Add IMU Filter Madgwick
         # Node(
         #     package='imu_filter_madgwick',
