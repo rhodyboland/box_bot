@@ -11,7 +11,7 @@ import os
 
 # ros2 launch slam_toolbox online_async_launch.py slam_params_file:="./nav2_launcher/config/mapper_params_online_async.yaml"
 
-# ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -p frame_id:='base_link'
+# ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 #rviz2 -d ./nav2_launcher/config/map.rviz 
 
