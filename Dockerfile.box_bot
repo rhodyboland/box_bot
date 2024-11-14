@@ -1,0 +1,45 @@
+# Use the base Isaac ROS image as the starting point
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install required packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libi2c-dev \
+    ros-humble-hardware-interface \
+    ros-humble-pluginlib \
+    ros-humble-rclcpp \
+    ros-humble-rclcpp-lifecycle \
+    ros-humble-ros2-controllers-test-nodes \
+    ros-humble-controller-manager \
+    ros-humble-joint-state-broadcaster \
+    ros-humble-diff-drive-controller \
+    ros-humble-ros2controlcli \
+    ros-humble-robot-state-publisher \
+    ros-humble-launch \
+    ros-humble-launch-ros \
+    ros-humble-xacro \
+    ros-humble-sensor-msgs \
+    # ros-humble-serial \
+    ros-humble-imu-tools \
+    ros-humble-std-srvs \
+    ros-humble-slam-toolbox \
+    ros-humble-nav2-bringup \
+    ros-humble-navigation2 \
+    python3-serial \
+    ros-humble-robot-localization \
+    # libboost \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /workspaces/isaac_ros-dev
+
+# Source the ROS setup
+SHELL ["/bin/bash", "-c"]
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+
+# Expose ports (optional)
+EXPOSE 8080
+EXPOSE 11311
