@@ -23,10 +23,10 @@ ekf_filter_node:
     imu0: /imu
     imu0_config: 
               [ false, false, false,   # Position: x, y, z
-                true,  true,  true,    # Orientation: roll, pitch, yaw
+                false,  false,  false,    # Orientation: roll, pitch, yaw
                 false, false, false,   # Linear Velocity: vx, vy, vz
-                true,  true,  true,    # Angular Velocity: vroll, vpitch, vyaw
-                true,  true,  true ]   # Linear Acceleration: ax, ay, az
+                false,  false,  true,    # Angular Velocity: vroll, vpitch, vyaw
+                false,  false,  false ]   # Linear Acceleration: ax, ay, az
     imu0_differential: false
     imu0_remove_gravitational_acceleration: true
 
