@@ -1,0 +1,68 @@
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    publish_tf: true
+    
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    print_diagnostics: true
+
+    # Wheel odometry input
+    odom0: /hoverboard_base_controller/odom
+    odom0_config: 
+              [ true,  true,  false,   # x, y, z
+                false, false, true,    # roll, pitch, yaw
+                true,  true,  false,   # vx, vy, vz
+                true, false, false,    # vroll, vpitch, vyaw
+                false, false, true ]  # ax, ay, az
+
+    # Now use the fused IMU data
+    imu0: /imu
+    imu0_config: 
+              [ false, false, false,   # Position: x, y, z
+                true,  true,  true,    # Orientation: roll, pitch, yaw
+                false, false, false,   # Linear Velocity: vx, vy, vz
+                true,  true,  true,    # Angular Velocity: vroll, vpitch, vyaw
+                true,  true,  true ]   # Linear Acceleration: ax, ay, az
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true
+
+    # # Initial State Estimate
+    # initial_state:
+    #   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # # Process Noise Covariance (6x6 Matrix)
+    # process_noise_covariance:
+    #   [
+    #     0.05, 0.0, 0.0, 0.0, 0.0, 0.0,  # x
+    #     0.0, 0.05, 0.0, 0.0, 0.0, 0.0,  # y
+    #     0.0, 0.0, 0.05, 0.0, 0.0, 0.0,  # yaw
+    #     0.0, 0.0, 0.0, 0.05, 0.0, 0.0,  # vx
+    #     0.0, 0.0, 0.0, 0.0, 0.05, 0.0,  # vy
+    #     0.0, 0.0, 0.0, 0.0, 0.0, 0.05   # vyaw
+    #   ]
+
+    # # Measurement Noise Covariance (6x6 Matrix)
+    # measurement_noise_covariance:
+    #   [
+    #     0.001, 0.0,   0.0,   0.0,   0.0, 0.0,  # x
+    #     0.0, 0.001,   0.0,   0.0,   0.0, 0.0,  # y
+    #     0.0, 0.0,   0.03,   0.0,   0.0, 0.0,  # yaw
+    #     0.0, 0.0,   0.0, 0.05,   0.0, 0.0,    # vx
+    #     0.0, 0.0,   0.0,   0.0, 0.05, 0.0,    # vy
+    #     0.0, 0.0,   0.0,   0.0,   0.0, 0.05     # vyaw
+    #   ]
+
+    # # Initial Estimate Covariance (6x6 Matrix)
+    # initial_estimate_covariance:
+    #   [
+    #     1e-9, 0.0, 0.0, 0.0, 0.0, 0.0,  # x
+    #     0.0, 1e-9, 0.0, 0.0, 0.0, 0.0,  # y
+    #     0.0, 0.0, 1e-9, 0.0, 0.0, 0.0,  # yaw
+    #     0.0, 0.0, 0.0, 1e-9, 0.0, 0.0,  # vx
+    #     0.0, 0.0, 0.0, 0.0, 1e-9, 0.0,  # vy
+    #     0.0, 0.0, 0.0, 0.0, 0.0, 1e-9   # vyaw
+    #   ]

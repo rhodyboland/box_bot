@@ -1,0 +1,35 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Name: RobotModel
+      Class: rviz_default_plugins/RobotModel
+      Enabled: true
+      Robot Description: "robot_description"
+    - Name: TF
+      Class: rviz_default_plugins/TF
+      Enabled: true
+    - Name: Global Costmap
+      Class: rviz_default_plugins/Map
+      Topic: "/map"
+      Enabled: true
+    - Name: Local Costmap
+      Class: rviz_default_plugins/Map
+      Topic: "/local_costmap/costmap"
+      Enabled: true
+    - Name: AMCL Pose Estimate
+      Class: rviz_default_plugins/Pose
+      Topic: "/amcl_pose"
+      Enabled: true
+    - Name: Path
+      Class: rviz_default_plugins/Path
+      Topic: "/plan"
+      Enabled: true
+    - Name: Odometry
+      Class: rviz_default_plugins/Odometry
+      Topic: "/diffbot_base_controller/odom"
+      Enabled: true
+  Global Options:
+    Fixed Frame: "map"
