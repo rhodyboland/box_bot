@@ -27,7 +27,20 @@ Clone this repo
 cd ${ISAAC_ROS_WS}/src && \
    git clone -b micro-indoor-orin_nano --recurse-submodules git@github.com:rhodyboland/box_bot.git
 ```
-Build (and run) docker container
+
+Customise the image:
+
+Create a .isaac_ros_common-config in the home directory. This is the contents of mine, it points to the correct location of dockerfile if above commands used.
+
+```
+CONFIG_IMAGE_KEY="ros2_humble.box_bot"
+CONFIG_DOCKER_SEARCH_DIRS=("/home/rhody-jetson/workspaces/isaac_ros-dev/src/box_bot")
+CONFIG_CONTAINER_NAME_SUFFIX="boxbot"
+BASE_DOCKER_REGISTRY_NAMES=("nvcr.io/isaac/ros")
+```
+
+
+Build (and run) docker container. The first time will take a while
 ```
 cd ${ISAAC_ROS_WS}/src/isaac_ros_common && \
 ./scripts/run_dev.sh
