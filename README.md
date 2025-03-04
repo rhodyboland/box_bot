@@ -1,7 +1,7 @@
 # box_bot
 ## Micro metal indoor ros2 robot on the orin nano using Isaac ROS 3.1 in a docker container
 
-For a fresh install:
+### For a fresh install:
 ```
 sudo systemctl daemon-reload && sudo systemctl restart docker
 ```
@@ -28,9 +28,9 @@ cd ${ISAAC_ROS_WS}/src && \
    git clone -b micro-indoor-orin_nano --recurse-submodules git@github.com:rhodyboland/box_bot.git
 ```
 
-Customise the image:
+To use dockerfile included:
 
-Create a .isaac_ros_common-config in the home directory. This is the contents of mine, it points to the correct location of dockerfile if above commands used.
+Create a .isaac_ros_common-config file in the home directory and place the below inside. This points to the correct location of dockerfile if above commands used.
 
 ```
 CONFIG_IMAGE_KEY="ros2_humble.box_bot"
@@ -40,10 +40,23 @@ BASE_DOCKER_REGISTRY_NAMES=("nvcr.io/isaac/ros")
 ```
 
 
-Build (and run) docker container. The first time will take a while
+Build (and run) docker container. **The first time will take a while, like hours.** This command is what is used to launch the container from now on. Add ```-b/--skip_image_build``` for offline running.
 ```
 cd ${ISAAC_ROS_WS}/src/isaac_ros_common && \
 ./scripts/run_dev.sh
+```
+#
+
+If you get this error:
+
+```
+docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: could not apply required modification to OCI specification: error modifying OCI spec: failed to inject CDI devices: unresolvable CDI devices nvidia.com/gpu=all: unknown
+```
+
+Try running this:
+
+```
+sudo nvidia-ctk cdi generate --mode=csv --output=/etc/cdi/nvidia.yaml
 ```
 
 # packages:
