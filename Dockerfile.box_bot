@@ -41,5 +41,8 @@ SHELL ["/bin/bash", "-c"]
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 
 # Expose ports (optional)
-EXPOSE 8080
-EXPOSE 11311
+# EXPOSE 8080
+# EXPOSE 11311
+# sudo chmod 666 /dev/ttyUSB0
+# sudo chmod 666 /dev/ttyACM0
+# sudo chmod 666 /dev/i2c-7

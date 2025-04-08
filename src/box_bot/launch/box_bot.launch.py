@@ -91,12 +91,25 @@ def generate_launch_description():
         #     ],
         # ),
         # robot_localization node
+        
         Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
             parameters=[ekf_config]
+        ),
+        TimerAction(
+            period=20.0,  # Delay in seconds
+            actions=[
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource([
+                        PathJoinSubstitution([
+                            FindPackageShare('nav2_launcher'), 'launch', 'nav2_launch.py'
+                        ])
+                    ])
+                )
+            ]
         )
 
     ])
