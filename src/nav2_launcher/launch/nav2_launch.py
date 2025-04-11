@@ -20,7 +20,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import LoadComposableNodes, ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 from nav2_common.launch import RewrittenYaml
@@ -188,8 +188,67 @@ def generate_launch_description():
                 parameters=[{'use_sim_time': use_sim_time},
                             {'autostart': autostart},
                             {'node_names': lifecycle_nodes}]),
+
+
+            Node(
+                package='opennav_docking',
+                executable='opennav_docking',
+                name='docking_server',
+                output='screen',
+                parameters=[os.path.join(bringup_dir, 'config', 'docking_params.yaml')],
+            ),
+            Node(
+                package='box_bot_docking',
+                executable='dock_pose_publisher',
+                name='dock_pose_publisher',
+                parameters=[{'dock_tag_id': 0, 'use_first_detection': True}]
+            ),
+
         ]
     )
+    vision_container = ComposableNodeContainer(
+        package='rclcpp_components',
+        name='vision_container',
+        namespace='',
+        executable='component_container_mt',
+        composable_node_descriptions=[
+            ComposableNode(
+                package='usb_cam',
+                plugin='usb_cam::UsbCamNode',
+                name='usb_cam_node',
+                parameters=[os.path.join(
+                    get_package_share_directory('nav2_launcher'),
+                    'config', 'usb_cam_params.yaml')]
+            ),
+            ComposableNode(
+                package='isaac_ros_image_proc',
+                plugin='nvidia::isaac_ros::image_proc::RectifyNode',
+                name='rectify',
+                parameters=[{
+                    'output_width': 1280,
+                    'output_height': 720,
+                }]
+            ),
+            ComposableNode(
+                package='isaac_ros_apriltag',
+                plugin='nvidia::isaac_ros::apriltag::AprilTagNode',
+                name='apriltag',
+                remappings=[
+                    ('image', 'image_rect'),
+                    ('camera_info', 'camera_info_rect')
+                ],
+                parameters=[{
+                    'size': 0.1524,  # ← TAG SIZE IN METERS (e.g., 6 inches)
+                    'max_tags': 10,
+                    'tile_size': 4,
+                    'tag_family': 'tag36h11',
+                    'backends': 'CUDA'
+                }]
+            )
+        ],
+        output='screen'
+    )
+
 
     load_composable_nodes = LoadComposableNodes(
         condition=IfCondition(use_composition),
@@ -265,6 +324,8 @@ def generate_launch_description():
     ld.add_action(declare_log_level_cmd)
     # Add the actions to launch all of the navigation nodes
     ld.add_action(load_nodes)
+    ld.add_action(vision_container)
+
     ld.add_action(load_composable_nodes)
 
     return ld

@@ -30,6 +30,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-navigation2 \
     python3-serial \
     ros-humble-robot-localization \
+    ros-humble-isaac-ros-apriltag \
+    ros-humble-opennav-docking \
+    ros-humble-usb-cam \
     # libboost \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -46,3 +49,6 @@ RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 # sudo chmod 666 /dev/ttyUSB0
 # sudo chmod 666 /dev/ttyACM0
 # sudo chmod 666 /dev/i2c-7
+# sudo cp camera_info.yaml /opt/ros/humble/share/isaac_ros_apriltag/config/camera_info.yaml 
+
+#cd ${ISAAC_ROS_WS}/src/isaac_ros_common && ./scripts/run_dev.sh
