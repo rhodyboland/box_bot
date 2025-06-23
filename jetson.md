@@ -1,4 +1,4 @@
-# Jetson Inference Setup
+# Jetson Specific Setups
 
 ***The Jetson can be very tedious about setting up certain parts so I made this little guide mainly for myself.***
 
@@ -68,4 +68,25 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+
+
+## DT Overlay for enabling GPIO Jetpack 6.2
+***Follow this guide for more info about whats behind this - [text](https://github.com/JetsonHacks/jetson-orin-gpio-patch)***
+**1. Compile**
+```
+dtc -I dts -O dtb -o gpio7-11-uart8-10.dtbo gpio7-11-uart8-10.dts
+```
+**2. Install**
+```
+sudo cp gpio7-11-uart8-10.dtbo /boot/
+sudo /opt/nvidia/jetson-io/jetson-io.py    # choose “Custom for hardware?” → "GPIO7/11 + UART8/10"
+sudo reboot
+```
+**3. Test**
+User should be apart of gpio
+Update Jetson.GPIO
+```
+sudo pip install --upgrade Jetson.GPIO
 ```

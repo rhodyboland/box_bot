@@ -1,0 +1,33 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    jetson-header-name = "Jetson 40pin Header";
+    overlay-name      = "GPIO7/11 + UART8/10";
+    compatible = "nvidia,p3768-0000+p3767-0000\0nvidia,p3768-0000+p3767-0001\0nvidia,p3768-0000+p3767-0003\0nvidia,p3768-0000+p3767-0004\0nvidia,p3768-0000+p3767-0005\0nvidia,p3768-0000+p3767-0000-super\0nvidia,p3768-0000+p3767-0001-super\0nvidia,p3768-0000+p3767-0003-super\0nvidia,p3768-0000+p3767-0004-super\0nvidia,p3768-0000+p3767-0005-super\0nvidia,p3509-0000+p3767-0000\0nvidia,p3509-0000+p3767-0001\0nvidia,p3509-0000+p3767-0003\0nvidia,p3509-0000+p3767-0004\0nvidia,p3509-0000+p3767-0005";
+    fragment@0 {
+        target = <&pinmux>;
+        __overlay__ {
+            pinctrl-names = "default";
+            pinctrl-0     = <&jetson_io_pinmux>;
+
+            jetson_io_pinmux: exp-header-pinmux {
+                /* Pin 7 → soc_gpio59_pac6 as bidirectional GPIO (input enabled) */
+                hdr40-pin7 {
+                    nvidia,pins         = "soc_gpio59_pac6";
+                    nvidia,tristate     = <0x0>;
+                    nvidia,enable-input = <0x1>;
+                    nvidia,pull         = <0x0>;
+                };
+                /* Pin 11 → uart1_rts_pr4 repurposed as GPIO output */
+                hdr40-pin11 {
+                    nvidia,pins         = "uart1_rts_pr4";
+                    nvidia,tristate     = <0x0>;
+                    nvidia,enable-input = <0x1>;
+                    nvidia,pull         = <0x0>;
+                };
+            };
+        };
+    };
+};
+
