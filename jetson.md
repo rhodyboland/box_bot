@@ -73,7 +73,8 @@ if __name__ == "__main__":
 
 
 ## DT Overlay for enabling GPIO Jetpack 6.2
-***Follow this guide for more info about whats behind this - [text](https://github.com/JetsonHacks/jetson-orin-gpio-patch)***
+***Follow this guide for more info about whats behind this - [JetsonHacks repository](https://github.com/JetsonHacks/jetson-orin-gpio-patch)***
+
 **1. Compile**
 ```
 dtc -I dts -O dtb -o gpio7-11-uart8-10.dtbo gpio7-11-uart8-10.dts
@@ -85,8 +86,21 @@ sudo /opt/nvidia/jetson-io/jetson-io.py    # choose “Custom for hardware?” �
 sudo reboot
 ```
 **3. Test**
+
 User should be apart of gpio
 Update Jetson.GPIO
 ```
 sudo pip install --upgrade Jetson.GPIO
+```
+
+### Work around to permission errors and isaac launch
+```
+sudo chmod 666 /dev/ttyTHS1
+sudo chmod 666 /dev/ttyUSB0
+sudo chmod 666 /dev/ttyACM0
+
+```
+
+```
+cd $ISAAC_ROS_WS && ./src/isaac_ros_common/scripts/run_dev.sh
 ```

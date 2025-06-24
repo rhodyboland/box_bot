@@ -5,9 +5,19 @@ FROM ${BASE_IMAGE}
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl gnupg lsb-release && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+        -o /etc/apt/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-archive-keyring.gpg] \
+        http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+        > /etc/apt/sources.list.d/ros2.list
+
 # Update and install required packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-jetson-gpio \
+    # python3-jetson-gpio \
     libi2c-dev \
     ros-humble-teleop-twist-joy \
     ros-humble-teleop-twist-keyboard \
@@ -36,6 +46,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # libboost \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN pip3 install --upgrade Jetson.GPIO
+
 # Set the working directory
 WORKDIR /workspaces/isaac_ros-dev
 
@@ -46,3 +58,10 @@ RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 # Expose ports (optional)
 EXPOSE 8080
 EXPOSE 11311
+
+# ---- add GPIO group hook ----------------------------------------
+COPY 10_add_gpio_groups.sh /usr/local/bin/scripts/entrypoint_additions/
+
+
+# -v /sys/devices/:/sys/devices/ \
+# -v /sys/class/gpio:/sys/class/gpio
