@@ -33,7 +33,7 @@ if(BUILD_TESTING)
 endif()
 #config
 install(
-  DIRECTORY config launch
+  DIRECTORY config launch behavior_trees
   DESTINATION share/${PROJECT_NAME}
 )
 

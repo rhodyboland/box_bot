@@ -11,6 +11,7 @@ bt_navigator:
     default_server_timeout: 100
     wait_for_service_timeout: 1000
     action_server_result_timeout: 900.0
+    default_nav_to_pose_bt_xml: ""
     navigators: ["navigate_to_pose", "navigate_through_poses"]
     navigate_to_pose:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
@@ -35,51 +36,46 @@ controller_server:
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.2
+      yaw_goal_tolerance: 3.14
       stateful: True
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      required_movement_radius: 0.15
+      movement_time_allowance: 30.0
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: false
-      min_vel_x: 0.02
+      min_vel_x: 0.03
       min_vel_y: 0.0
-      max_vel_x: 0.5
+      max_vel_x: 0.12
       max_vel_y: 0.0
-      max_vel_theta: 2.0
+      max_vel_theta: 0.4
       min_speed_xy: 0.0
-      max_speed_xy: 0.5
-      min_speed_theta: 0.1
-      acc_lim_x: 2.5
+      max_speed_xy: 0.12
+      min_speed_theta: 0.0
+      acc_lim_x: 0.25
       acc_lim_y: 0.0
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
+      acc_lim_theta: 0.8
+      decel_lim_x: -0.25
       decel_lim_y: 0.0
-      decel_lim_theta: -3.2
+      decel_lim_theta: -0.8
       vx_samples: 20
       vy_samples: 1
       vtheta_samples: 20
       sim_time: 1.5
       linear_granularity: 0.05
       angular_granularity: 0.025
-      transform_tolerance: 0.5
+      transform_tolerance: 1.0
       xy_goal_tolerance: 0.25
       trans_stopped_velocity: 0.03
       prune_distance: 3.0
       stateful: True
       short_circuit_trajectory_evaluation: True
-      critics: ["RotateToGoal","Oscillation","GoalAlign","PathAlign","PathDist","GoalDist"]
-      PathAlign.scale: 32.0
-      GoalAlign.scale: 24.0
-      PathDist.scale: 32.0
+      critics: ["Oscillation","PathDist","GoalDist"]
+      PathDist.scale: 16.0
       GoalDist.scale: 24.0
       ObstacleFootprint.scale: 0.01
       Oscillation.scale: 1.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
 
 planner_server:
   ros__parameters:
@@ -109,6 +105,8 @@ behavior_server:
     costmap_topic: local_costmap/costmap_raw
     global_footprint_topic: local_costmap/published_footprint
     cycle_frequency: 10.0
+    # The stock Nav2 recovery BT expects these action servers to exist. Keep
+    # their velocities capped low for GPS-only bringup.
     behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
     spin:
       plugin: "nav2_behaviors/Spin"
@@ -122,11 +120,11 @@ behavior_server:
       plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: odom
     robot_base_frame: base_footprint
-    transform_tolerance: 0.5
+    transform_tolerance: 1.0
     simulate_ahead_time: 2.0
-    max_rotational_vel: 1.0
-    min_rotational_vel: 0.3
-    rotational_acc_lim: 3.2
+    max_rotational_vel: 0.4
+    min_rotational_vel: 0.1
+    rotational_acc_lim: 0.8
 
 global_costmap:
   global_costmap:
@@ -137,7 +135,7 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_footprint
       rolling_window: true
-      track_unknown_space: true
+      track_unknown_space: false
       # Make this generous so most goals are in-bounds
       width: 150
       height: 150
@@ -160,7 +158,7 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_footprint
       rolling_window: true
-      track_unknown_space: true
+      track_unknown_space: false
       # Bigger so the front of the global plan overlaps
       width: 12
       height: 12
@@ -190,10 +188,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.5, 0.0, 2.0]
-    min_velocity: [-0.5, 0.0, -2.0]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
+    max_velocity: [0.12, 0.0, 0.4]
+    min_velocity: [-0.05, 0.0, -0.4]
+    max_accel: [0.25, 0.0, 0.8]
+    max_decel: [-0.25, 0.0, -0.8]
     odom_topic: /odometry/local
     odom_duration: 0.1
     deadband_velocity: [0.02, 0.0, 0.0]

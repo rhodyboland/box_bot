@@ -25,6 +25,8 @@ def generate_launch_description():
     gps_heading_max_yaw_rate = LaunchConfiguration('gps_heading_max_yaw_rate')
     gps_heading_covariance_floor = LaunchConfiguration('gps_heading_covariance_floor')
     gps_heading_invert = LaunchConfiguration('gps_heading_invert')
+    gps_heading_baseline_min = LaunchConfiguration('gps_heading_baseline_min')
+    gps_heading_baseline_max = LaunchConfiguration('gps_heading_baseline_max')
     navsat_log_level = LaunchConfiguration('navsat_log_level')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
@@ -86,10 +88,12 @@ def generate_launch_description():
         DeclareLaunchArgument('gps_heading_yaw_offset', default_value='3.14159265359'),
         DeclareLaunchArgument('gps_heading_filter_alpha', default_value='0.35'),
         DeclareLaunchArgument('gps_heading_max_yaw_rate', default_value='2.0'),
-        DeclareLaunchArgument('gps_heading_covariance_floor', default_value='0.0076154355'),
+        DeclareLaunchArgument('gps_heading_covariance_floor', default_value='0.030461742'),
         # With ACM2 as the rear rover antenna and ACM0 40 cm forward, the
         # ublox moving-baseline heading has the same yaw sign as wheel odom.
         DeclareLaunchArgument('gps_heading_invert', default_value='false'),
+        DeclareLaunchArgument('gps_heading_baseline_min', default_value='0.34'),
+        DeclareLaunchArgument('gps_heading_baseline_max', default_value='0.46'),
         DeclareLaunchArgument('navsat_log_level', default_value='warn'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),
@@ -215,10 +219,21 @@ def generate_launch_description():
                     gps_heading_invert,
                     value_type=bool
                 ),
+                'baseline_length_min': ParameterValue(
+                    gps_heading_baseline_min,
+                    value_type=float
+                ),
+                'baseline_length_max': ParameterValue(
+                    gps_heading_baseline_max,
+                    value_type=float
+                ),
+                'hold_heading_on_reject': True,
+                'rejected_yaw_covariance': 1.0,
             }],
             remappings=[
                 ('imu/in', '/gps/heading'),
                 ('imu/out', '/gps/heading_corrected'),
+                ('relposned', '/gps/relposned'),
             ],
         ),
 
@@ -271,6 +286,11 @@ def generate_launch_description():
                         'autostart': autostart,
                         'params_file': nav2_params,
                         'log_level': log_level,
+                        'default_nav_to_pose_bt_xml': PathJoinSubstitution([
+                            FindPackageShare('box_bot'),
+                            'behavior_trees',
+                            'gps_nav_to_pose.xml'
+                        ]),
                     }.items()
                 )
             ]
