@@ -1,0 +1,23 @@
+ublox_gps_node:
+  ros__parameters:
+    debug: 0
+    device: /dev/ttyACM2
+    frame_id: gps
+    rate: 5.0
+    # Absolutely do not reconfigure the receiver on boot
+    config_on_startup: false
+
+    # Don’t run base-station mode
+    tmode3: 0
+
+    # Don’t touch UARTs at all (delete uart1/uart2 blocks)
+    # baudrate for the serial link to the receiver:
+    baudrate: 115200
+    inf:
+      all: false
+    # Publish what you need
+    publish:
+      all: false
+      nav:
+        pvt: true
+        heading: true

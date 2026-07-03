@@ -33,8 +33,16 @@ if(BUILD_TESTING)
 endif()
 #config
 install(
-  DIRECTORY launch
+  DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  PROGRAMS
+    scripts/gps_status_logger.py
+    scripts/imu_yaw_offset.py
+    scripts/rtk2go_ntrip_client.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()

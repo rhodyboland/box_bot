@@ -13,6 +13,7 @@ def main():
     GPIO.setup(ON_SENSE_PIN, GPIO.IN)
     print("Starting demo now! Press CTRL+C to exit")
     try:
+        print(GPIO.input(ON_SENSE_PIN))
         if not GPIO.input(ON_SENSE_PIN):
             print("Hover was off, turning on")
             GPIO.output(SWITCH_PIN, GPIO.HIGH)
@@ -23,6 +24,7 @@ def main():
             GPIO.output(SWITCH_PIN, GPIO.HIGH)
             time.sleep(0.1)
             GPIO.output(SWITCH_PIN, GPIO.LOW)
+        print(GPIO.input(ON_SENSE_PIN))
     finally:
         GPIO.cleanup()
 

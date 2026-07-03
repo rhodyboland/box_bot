@@ -1,0 +1,6 @@
+[ublox_gps_node-7] terminate called after throwing an instance of 'std::runtime_error'
+[ublox_gps_node-7]   what():  U-Blox: Could not open serial port :/dev/ttyACM2 open: Device or resource busy
+
+> gpsd service running OUTSIDE container
+> sudo fuser -k /dev/ttyACM2
+

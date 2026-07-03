@@ -1,0 +1,32 @@
+gps_rover:
+  ros__parameters:
+    debug: 0
+    device: /dev/ttyACM2
+    frame_id: gps
+    rate: 5.0
+    baudrate: 115200
+    config_on_startup: false
+    tmode3: 0
+    inf:
+      all: false
+    publish:
+      all: false
+      nav:
+        pvt: true
+        heading: true
+        relposned: true
+
+gps_moving_base:
+  ros__parameters:
+    debug: 0
+    device: /dev/ttyACM0
+    frame_id: gps_moving_base
+    rate: 5.0
+    baudrate: 115200
+    config_on_startup: false
+    inf:
+      all: false
+    publish:
+      all: false
+      nav:
+        pvt: true

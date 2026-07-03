@@ -1,0 +1,83 @@
+ekf_filter_node_odom:
+  ros__parameters:
+    frequency: 20.0
+    sensor_timeout: 0.5
+    two_d_mode: true
+    publish_tf: true
+    print_diagnostics: true
+
+    # Frames
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # Wheel odom (local continuity). Use the diff-drive controller's integrated
+    # pose for local odom; GPS owns global/map corrections.
+    odom0: /hoverboard_base_controller/odom
+    odom0_config: [
+      true,  true,  false,   # x, y, z
+      false, false, true,    # roll, pitch, yaw
+      false, false, false,   # vx, vy, vz
+      false, false, false,   # vroll, vpitch, vyaw
+      false, false, false    # ax, ay, az
+    ]
+    odom0_differential: false
+    odom0_relative: true
+
+    # Physical IMU deliberately not fused for this GPS-only test.
+    # The current unit is too noisy and can make TF yaw drift while stationary.
+
+
+navsat_transform:
+  ros__parameters:
+    frequency: 2.0
+    delay: 2.0
+    log_level: "ERROR"
+    magnetic_declination_radians: 0.0
+    yaw_offset: 0.0
+    zero_altitude: true
+
+    use_odometry_yaw: false
+    broadcast_cartesian_transform: true
+    publish_filtered_gps: false
+
+    wait_for_datum: false
+
+
+ekf_filter_node_map:
+  ros__parameters:
+    frequency: 20.0
+    sensor_timeout: 1.0      # allow short GNSS dropouts without instantly timing out
+    two_d_mode: true
+    publish_tf: true
+    print_diagnostics: true
+
+    # Frames
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: map
+
+    # GPS odometry from navsat_transform
+    odom1: /odometry/gps
+    odom1_config: [
+      true,  true,  false,   # x, y
+      false, false, false,
+      false, false, false,
+      false, false, false,
+      false, false, false
+    ]
+
+    # Absolute heading from the moving-base F9P after launch-level yaw offset.
+    # Keep the physical IMU out of the map filter so GPS owns global heading.
+    imu0: /gps/heading_corrected
+    imu0_config: [
+      false, false, false,
+      false, false, true,    # yaw
+      false, false, false,
+      false, false, false,
+      false, false, false
+    ]
+    imu0_differential: false
+    imu0_relative: false

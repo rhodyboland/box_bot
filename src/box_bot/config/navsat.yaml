@@ -1,0 +1,15 @@
+# config/navsat.yaml
+navsat_transform:
+  ros__parameters:
+    frequency: 10.0
+    delay: 3.0                 # give odom time to come up before initializing
+    zero_altitude: true
+    use_odometry_yaw: true     # <-- no IMU needed
+    publish_filtered_gps: false
+    wait_for_datum: false
+    broadcast_cartesian_transform: true
+    log_level: "ERROR"
+
+    gps_topic: /gps/fix
+    odom_topic: /hoverboard_base_controller/odom
+    imu_topic: /imu/data        # ignored when use_odometry_yaw=true

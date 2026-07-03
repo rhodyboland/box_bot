@@ -9,6 +9,17 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <exec_depend>hoverboard_control</exec_depend>
+  <exec_depend>icm_20948</exec_depend>
+  <exec_depend>nav2_launcher</exec_depend>
+  <exec_depend>ntrip_client</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>rtcm_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>ublox_gps</exec_depend>
+  <exec_depend>ublox_msgs</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

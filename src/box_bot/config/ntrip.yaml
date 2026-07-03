@@ -1,0 +1,28 @@
+ntrip_client:
+  ros__parameters:
+    # Local str2str raw RTCM TCP stream. Use mode: ntrip for caster URLs.
+    mode: tcp
+    host: 192.168.0.131
+    port: 5000
+    mountpoint: "MtRavensbourne"
+    ntrip_version: "Ntrip/2.0"
+    user_agent: "NTRIP curl_test"
+
+    authenticate: false
+    username: "boland684@gmail.com"
+    password: "none"
+
+    ssl: false
+    cert: ""
+    key: ""
+    ca_cert: ""
+
+    rtcm_frame_id: odom
+    rtcm_message_package: rtcm_msgs
+    nmea_max_length: 128
+    nmea_min_length: 3
+    validate_rtcm_crc: true
+    log_rtcm_interval: 50
+    reconnect_attempt_max: 10
+    reconnect_attempt_wait_seconds: 5
+    rtcm_timeout_seconds: 4

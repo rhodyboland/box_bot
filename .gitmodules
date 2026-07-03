@@ -10,3 +10,7 @@
 [submodule "src/icm_20948"]
 	path = src/icm_20948
 	url = git@github.com:rhodyboland/icm_20948.git
+[submodule "src/ublox"]
+	path = src/ublox
+	url = git@github.com:KumarRobotics/ublox.git
+	branch = ros2
