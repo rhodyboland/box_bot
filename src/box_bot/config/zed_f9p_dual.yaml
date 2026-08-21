@@ -1,7 +1,7 @@
 gps_rover:
   ros__parameters:
     debug: 0
-    device: /dev/ttyACM2
+    device: /dev/boxbot/gps_rover
     frame_id: gps
     rate: 5.0
     baudrate: 115200
@@ -19,7 +19,7 @@ gps_rover:
 gps_moving_base:
   ros__parameters:
     debug: 0
-    device: /dev/ttyACM0
+    device: /dev/boxbot/gps_moving_base
     frame_id: gps_moving_base
     rate: 5.0
     baudrate: 115200

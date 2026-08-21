@@ -40,6 +40,7 @@ RUN apt-get update --allow-releaseinfo-change && \
       ros-humble-launch \
       ros-humble-launch-ros \
       ros-humble-xacro \
+      i2c-tools \
       ros-humble-sensor-msgs \
       ros-humble-nmea-navsat-driver \
       ros-humble-imu-tools \
@@ -62,7 +63,7 @@ RUN git clone --branch ros2 https://github.com/KumarRobotics/ublox.git \
       /workspaces/isaac_ros-dev/src/box_bot/src/ublox
 
 RUN pip3 install --upgrade Jetson.GPIO
-
+RUN pip3 install sparkfun-qwiic-icm20948 sparkfun-qwiic-i2c
 WORKDIR /workspaces/isaac_ros-dev
 
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc

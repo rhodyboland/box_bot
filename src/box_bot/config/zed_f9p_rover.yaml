@@ -1,7 +1,7 @@
 ublox_gps_node:
   ros__parameters:
     debug: 0
-    device: /dev/ttyACM2
+    device: /dev/boxbot/gps_rover
     frame_id: gps
     rate: 5.0
     # Absolutely do not reconfigure the receiver on boot

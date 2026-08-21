@@ -1,0 +1,24 @@
+# Box Bot device permissions and stable names.
+#
+# Install on the Jetson host:
+#   sudo cp 99-boxbot-devices.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger
+#
+# Find USB serial attributes with:
+#   udevadm info -a -n /dev/ttyACM0 | less
+#   udevadm info -a -n /dev/ttyUSB0 | less
+
+SUBSYSTEM=="i2c-dev", KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"
+SUBSYSTEM=="tty", KERNEL=="ttyTHS[0-9]*", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", KERNEL=="ttyUSB[0-9]*", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", KERNEL=="ttyACM[0-9]*", GROUP="dialout", MODE="0660"
+
+# Stable names for identical u-blox ZED-F9P receivers. These units report the
+# same USB serial, so match the physical USB port path.
+SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01a9", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.2:1.0", SYMLINK+="boxbot/gps_moving_base", GROUP="dialout", MODE="0660"
+SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01a9", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.1:1.0", SYMLINK+="boxbot/gps_rover", GROUP="dialout", MODE="0660"
+#
+# SLLIDAR USB adapter:
+# SUBSYSTEM=="tty", ATTRS{idVendor}=="REPLACE_ME", ATTRS{idProduct}=="REPLACE_ME", ATTRS{serial}=="REPLACE_ME", SYMLINK+="boxbot/lidar", GROUP="dialout", MODE="0660"

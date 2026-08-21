@@ -1,1 +1,4 @@
-sudo str2str   -in  tcpcli://192.168.0.192:5000   -out serial://ttyACM2   -out serial://ttyACM1
+sudo str2str \
+  -in tcpcli://192.168.0.192:5000 \
+  -out serial:///dev/boxbot/gps_rover \
+  -out serial:///dev/boxbot/gps_moving_base

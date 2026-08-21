@@ -93,7 +93,49 @@ Update Jetson.GPIO
 sudo pip install --upgrade Jetson.GPIO
 ```
 
-### Work around to permission errors and isaac launch
+### Device permissions and stable names
+
+Install the Box Bot udev rules on the Jetson host:
+
+```
+cd $ISAAC_ROS_WS/src/box_bot
+./install_boxbot_udev_rules.sh
+```
+
+Log out and back in after changing host groups.
+
+The rules set permissions for `/dev/i2c-*`, `/dev/gpiochip*`, `/dev/ttyTHS*`, `/dev/ttyUSB*`, and `/dev/ttyACM*`. The two u-blox receivers are pinned by physical USB port:
+
+- `/dev/boxbot/gps_moving_base`: USB path `platform-3610000.usb-usb-0:2.2:1.0`
+- `/dev/boxbot/gps_rover`: USB path `platform-3610000.usb-usb-0:2.1:1.0`
+
+Get updated serial device attributes with:
+
+```
+./list_serial_udev_attrs.sh
+```
+
+The Isaac ROS dockerargs file mounts `/dev/boxbot` into the container. The container entrypoint also fixes GPIO/I2C/serial group access at startup based on the device nodes' numeric host GIDs.
+
+### Fresh Jetson restore checklist
+
+After flashing JetPack and pulling this repo:
+
+```
+cd $ISAAC_ROS_WS/src/box_bot
+./install_boxbot_udev_rules.sh
+./list_serial_udev_attrs.sh
+```
+
+If the GPS receivers are plugged into different physical USB ports, update their `ENV{ID_PATH}` values in `99-boxbot-devices.rules`, then run `./install_boxbot_udev_rules.sh` again. Confirm:
+
+```
+ls -l /dev/boxbot
+```
+
+Then start a new Isaac ROS container. The installer updates `~/.isaac_ros_dev-dockerargs` so `/dev/boxbot` is bind-mounted into the container.
+
+### Old manual workaround
 ```
 sudo chmod 666 /dev/ttyTHS1
 sudo chmod 666 /dev/ttyUSB0

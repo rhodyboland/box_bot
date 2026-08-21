@@ -78,8 +78,11 @@ def generate_launch_description():
                 [FindPackageShare('box_bot'), 'config', 'nav2_minimal.yaml']
             )
         ),
-        DeclareLaunchArgument('rover_device', default_value='/dev/ttyACM2'),
-        DeclareLaunchArgument('moving_base_device', default_value='/dev/ttyACM0'),
+        DeclareLaunchArgument('rover_device', default_value='/dev/boxbot/gps_rover'),
+        DeclareLaunchArgument(
+            'moving_base_device',
+            default_value='/dev/boxbot/gps_moving_base',
+        ),
         DeclareLaunchArgument('rover_baudrate', default_value='115200'),
         DeclareLaunchArgument('moving_base_baudrate', default_value='115200'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
@@ -89,8 +92,8 @@ def generate_launch_description():
         DeclareLaunchArgument('gps_heading_filter_alpha', default_value='0.35'),
         DeclareLaunchArgument('gps_heading_max_yaw_rate', default_value='2.0'),
         DeclareLaunchArgument('gps_heading_covariance_floor', default_value='0.030461742'),
-        # With ACM2 as the rear rover antenna and ACM0 40 cm forward, the
-        # ublox moving-baseline heading has the same yaw sign as wheel odom.
+        # With the rover antenna at the rear and moving-base antenna 40 cm
+        # forward, the ublox heading has the same yaw sign as wheel odom.
         DeclareLaunchArgument('gps_heading_invert', default_value='false'),
         DeclareLaunchArgument('gps_heading_baseline_min', default_value='0.34'),
         DeclareLaunchArgument('gps_heading_baseline_max', default_value='0.46'),

@@ -14,3 +14,6 @@
 	path = src/ublox
 	url = git@github.com:KumarRobotics/ublox.git
 	branch = ros2
+[submodule "src/ros2_icm20948"]
+	path = src/ros2_icm20948
+	url = git@github.com:rhodyboland/ros2_icm20948.git
