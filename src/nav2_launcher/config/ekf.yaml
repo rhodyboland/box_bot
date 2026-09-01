@@ -19,8 +19,8 @@ ekf_filter_node:
                 true, false, false,    # vroll, vpitch, vyaw
                 false, false, true ]  # ax, ay, az
 
-    # Now use the fused IMU data
-    imu0: /imu
+    # BNO085 fused IMU data
+    imu0: /imu/data
     imu0_config: 
               [ false, false, false,   # Position: x, y, z
                 false,  false,  false,    # Orientation: roll, pitch, yaw
