@@ -10,7 +10,6 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>hoverboard_control</exec_depend>
-  <exec_depend>icm_20948</exec_depend>
   <exec_depend>nav2_launcher</exec_depend>
   <exec_depend>ntrip_client</exec_depend>
   <exec_depend>rclpy</exec_depend>

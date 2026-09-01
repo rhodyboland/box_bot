@@ -40,17 +40,6 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution([
-                    FindPackageShare('icm_20948'), 'launch', 'icm_20948.launch.py'
-                ])
-            ),
-            launch_arguments={
-                'imu_topic': '/imu/data',
-                'frame_id': 'imu_link',
-            }.items()
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                PathJoinSubstitution([
                     FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py'
                 ])
             )

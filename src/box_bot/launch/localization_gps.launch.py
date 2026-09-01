@@ -35,10 +35,6 @@ def generate_launch_description():
         # ====== Sensors / low-level control ======
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution(
-                [FindPackageShare('icm_20948'), 'launch', 'icm_20948.launch.py']))
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(PathJoinSubstitution(
                 [FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py']))
         ),
 

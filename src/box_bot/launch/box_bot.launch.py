@@ -21,14 +21,6 @@ def generate_launch_description():
     ekf_config = os.path.join(pkg_share, 'config', 'ekf.yaml')
 
     return LaunchDescription([
-        # New icm node
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([
-                PathJoinSubstitution([
-                    FindPackageShare('icm_20948'), 'launch', 'icm_20948.launch.py'
-                ])
-            ])
-        ),
         # ROS2 Control launch
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
