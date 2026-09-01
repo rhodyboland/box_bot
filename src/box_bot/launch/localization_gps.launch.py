@@ -35,6 +35,10 @@ def generate_launch_description():
         # ====== Sensors / low-level control ======
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution(
+                [FindPackageShare('box_bot'), 'launch', 'bno085.launch.py']))
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution(
                 [FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py']))
         ),
 

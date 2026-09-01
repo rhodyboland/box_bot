@@ -11,3 +11,6 @@
 	path = src/ublox
 	url = git@github.com:KumarRobotics/ublox.git
 	branch = ros2
+[submodule "src/bno08x_driver"]
+	path = src/bno08x_driver
+	url = https://github.com/bnbhat/bno08x_ros2_driver.git

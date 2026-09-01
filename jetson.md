@@ -135,6 +135,22 @@ ls -l /dev/boxbot
 
 Then start a new Isaac ROS container. The installer updates `~/.isaac_ros_dev-dockerargs` so `/dev/boxbot` is bind-mounted into the container.
 
+### BNO085 IMU
+
+The BNO085 is connected on I2C bus 7 at address `0x4A`.
+
+Check it from the Jetson host or Isaac ROS container with:
+
+```
+i2cdetect -y -r 7
+```
+
+The `box_bot` BNO launch wrapper starts `bno08x_driver` and remaps its onboard
+fusion output to the existing robot topics:
+
+- `/imu/data`: `sensor_msgs/Imu`
+- `/imu/mag_raw`: `sensor_msgs/MagneticField`
+
 ### Old manual workaround
 ```
 sudo chmod 666 /dev/ttyTHS1

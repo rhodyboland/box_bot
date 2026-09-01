@@ -21,6 +21,14 @@ def generate_launch_description():
     ekf_config = os.path.join(pkg_share, 'config', 'ekf.yaml')
 
     return LaunchDescription([
+        # BNO085 IMU
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare('box_bot'), 'launch', 'bno085.launch.py'
+                ])
+            ])
+        ),
         # ROS2 Control launch
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
