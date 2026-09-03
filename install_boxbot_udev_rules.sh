@@ -27,9 +27,15 @@ sudo udevadm trigger
 
 touch "${DOCKERARGS_FILE}"
 sed -i '\|^-v /run/udev:/run/udev:ro$|d' "${DOCKERARGS_FILE}"
-if ! grep -Fxq '-v /dev/boxbot:/dev/boxbot' "${DOCKERARGS_FILE}"; then
-    printf '\n-v /dev/boxbot:/dev/boxbot\n' >> "${DOCKERARGS_FILE}"
-fi
+add_docker_arg() {
+    local arg="$1"
+
+    if ! grep -Fxq "${arg}" "${DOCKERARGS_FILE}"; then
+        printf '\n%s\n' "${arg}" >> "${DOCKERARGS_FILE}"
+    fi
+}
+
+add_docker_arg '-v /dev/boxbot:/dev/boxbot'
 
 echo "Installed ${RULES_DST}"
 echo "Added ${HOST_USER} to dialout,gpio,i2c,video,plugdev."

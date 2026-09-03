@@ -70,8 +70,8 @@ ekf_filter_node_map:
     world_frame: map
 
     # GPS odometry from navsat_transform
-    odom1: /odometry/gps
-    odom1_config: [
+    odom0: /odometry/gps
+    odom0_config: [
       true,  true,  false,   # x, y
       false, false, false,
       false, false, false,
@@ -80,7 +80,7 @@ ekf_filter_node_map:
     ]
 
     # Absolute heading from the moving-base F9P after launch-level yaw offset.
-    # Keep the physical IMU out of the map filter so GPS owns global heading.
+    # Its covariance is adjusted upstream as baseline/RTK quality changes.
     imu0: /gps/heading_corrected
     imu0_config: [
       false, false, false,
@@ -91,3 +91,16 @@ ekf_filter_node_map:
     ]
     imu0_differential: false
     imu0_relative: false
+
+    # Physical IMU yaw-rate keeps map yaw moving smoothly between absolute GPS
+    # heading updates and lets high GPS yaw covariance actually reduce trust.
+    imu1: /imu/data
+    imu1_config: [
+      false, false, false,
+      false, false, false,
+      false, false, false,
+      false, false, true,    # vyaw
+      false, false, false
+    ]
+    imu1_differential: false
+    imu1_relative: false

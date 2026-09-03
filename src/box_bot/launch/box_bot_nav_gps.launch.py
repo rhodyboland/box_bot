@@ -19,7 +19,11 @@ def generate_launch_description():
     moving_base_baudrate = LaunchConfiguration('moving_base_baudrate')
     start_ntrip = LaunchConfiguration('start_ntrip')
     start_gps_status = LaunchConfiguration('start_gps_status')
+    start_motion_chain_logger = LaunchConfiguration('start_motion_chain_logger')
     gps_status_period = LaunchConfiguration('gps_status_period')
+    motion_chain_log_path = LaunchConfiguration('motion_chain_log_path')
+    motion_chain_sample_period = LaunchConfiguration('motion_chain_sample_period')
+    motion_chain_duration = LaunchConfiguration('motion_chain_duration')
     gps_heading_yaw_offset = LaunchConfiguration('gps_heading_yaw_offset')
     gps_heading_filter_alpha = LaunchConfiguration('gps_heading_filter_alpha')
     gps_heading_max_yaw_rate = LaunchConfiguration('gps_heading_max_yaw_rate')
@@ -27,6 +31,10 @@ def generate_launch_description():
     gps_heading_invert = LaunchConfiguration('gps_heading_invert')
     gps_heading_baseline_min = LaunchConfiguration('gps_heading_baseline_min')
     gps_heading_baseline_max = LaunchConfiguration('gps_heading_baseline_max')
+    gps_heading_baseline_soft_min = LaunchConfiguration('gps_heading_baseline_soft_min')
+    gps_heading_baseline_soft_max = LaunchConfiguration('gps_heading_baseline_soft_max')
+    gps_heading_dynamic_covariance = LaunchConfiguration('gps_heading_dynamic_covariance')
+    gps_heading_reference_rate_gate = LaunchConfiguration('gps_heading_reference_rate_gate')
     navsat_log_level = LaunchConfiguration('navsat_log_level')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
@@ -87,16 +95,24 @@ def generate_launch_description():
         DeclareLaunchArgument('moving_base_baudrate', default_value='115200'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
         DeclareLaunchArgument('start_gps_status', default_value='true'),
+        DeclareLaunchArgument('start_motion_chain_logger', default_value='false'),
         DeclareLaunchArgument('gps_status_period', default_value='10.0'),
+        DeclareLaunchArgument('motion_chain_log_path', default_value=''),
+        DeclareLaunchArgument('motion_chain_sample_period', default_value='0.1'),
+        DeclareLaunchArgument('motion_chain_duration', default_value='0.0'),
         DeclareLaunchArgument('gps_heading_yaw_offset', default_value='3.14159265359'),
-        DeclareLaunchArgument('gps_heading_filter_alpha', default_value='0.35'),
-        DeclareLaunchArgument('gps_heading_max_yaw_rate', default_value='2.0'),
+        DeclareLaunchArgument('gps_heading_filter_alpha', default_value='1.0'),
+        DeclareLaunchArgument('gps_heading_max_yaw_rate', default_value='10.0'),
         DeclareLaunchArgument('gps_heading_covariance_floor', default_value='0.030461742'),
         # With the rover antenna at the rear and moving-base antenna 40 cm
         # forward, the ublox heading has the same yaw sign as wheel odom.
         DeclareLaunchArgument('gps_heading_invert', default_value='false'),
         DeclareLaunchArgument('gps_heading_baseline_min', default_value='0.34'),
         DeclareLaunchArgument('gps_heading_baseline_max', default_value='0.46'),
+        DeclareLaunchArgument('gps_heading_baseline_soft_min', default_value='0.25'),
+        DeclareLaunchArgument('gps_heading_baseline_soft_max', default_value='0.55'),
+        DeclareLaunchArgument('gps_heading_dynamic_covariance', default_value='true'),
+        DeclareLaunchArgument('gps_heading_reference_rate_gate', default_value='false'),
         DeclareLaunchArgument('navsat_log_level', default_value='warn'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),
@@ -145,13 +161,22 @@ def generate_launch_description():
                 f9p_params,
                 {
                     'device': rover_device,
-                    'baudrate': ParameterValue(rover_baudrate, value_type=int),
+                    'uart1.baudrate': ParameterValue(
+                        rover_baudrate,
+                        value_type=int
+                    ),
                 },
             ],
             remappings=[
+                ('fix', '/gps_rover/fix'),
+                ('fix_velocity', '/gps_rover/fix_velocity'),
+                ('navpvt', '/gps_rover/navpvt'),
                 ('navheading', '/gps/heading'),
                 ('navrelposned', '/gps/relposned'),
+                ('navstatus', '/gps_rover/navstatus'),
+                ('navcov', '/gps_rover/navcov'),
                 ('nmea', '/gps/nmea'),
+                ('rxmrtcm', '/gps_rover/rxmrtcm'),
                 ('rtcm', '/rtcm'),
             ],
         ),
@@ -164,14 +189,19 @@ def generate_launch_description():
                 f9p_params,
                 {
                     'device': moving_base_device,
-                    'baudrate': ParameterValue(moving_base_baudrate, value_type=int),
+                    'uart1.baudrate': ParameterValue(
+                        moving_base_baudrate,
+                        value_type=int
+                    ),
                 },
             ],
             remappings=[
                 ('fix', '/gps_moving_base/fix'),
                 ('fix_velocity', '/gps_moving_base/fix_velocity'),
                 ('navpvt', '/gps_moving_base/navpvt'),
+                ('navstatus', '/gps_moving_base/navstatus'),
                 ('nmea', '/gps_moving_base/nmea'),
+                ('rxmrtcm', '/gps_moving_base/rxmrtcm'),
                 ('rtcm', '/rtcm'),
             ],
         ),
@@ -189,6 +219,24 @@ def generate_launch_description():
                 'moving_base_fix_topic': '/gps_moving_base/fix',
                 'moving_base_navpvt_topic': '/gps_moving_base/navpvt',
                 'relposned_topic': '/gps/relposned',
+            }],
+        ),
+        Node(
+            package='box_bot',
+            executable='motion_chain_logger.py',
+            name='motion_chain_logger',
+            output='screen',
+            condition=IfCondition(start_motion_chain_logger),
+            parameters=[{
+                'output_path': motion_chain_log_path,
+                'sample_period': ParameterValue(
+                    motion_chain_sample_period,
+                    value_type=float,
+                ),
+                'duration_seconds': ParameterValue(
+                    motion_chain_duration,
+                    value_type=float,
+                ),
             }],
         ),
 
@@ -226,8 +274,27 @@ def generate_launch_description():
                     gps_heading_baseline_max,
                     value_type=float
                 ),
-                'hold_heading_on_reject': True,
+                'baseline_length_soft_min': ParameterValue(
+                    gps_heading_baseline_soft_min,
+                    value_type=float
+                ),
+                'baseline_length_soft_max': ParameterValue(
+                    gps_heading_baseline_soft_max,
+                    value_type=float
+                ),
+                'dynamic_yaw_covariance': ParameterValue(
+                    gps_heading_dynamic_covariance,
+                    value_type=bool
+                ),
+                'reference_imu_topic': '/imu/data',
+                'gate_with_reference_yaw_rate': ParameterValue(
+                    gps_heading_reference_rate_gate,
+                    value_type=bool
+                ),
+                'require_fixed_baseline': False,
+                'require_differential_baseline': False,
                 'rejected_yaw_covariance': 1.0,
+                'relposned_timeout_seconds': 2.0,
             }],
             remappings=[
                 ('imu/in', '/gps/heading'),
@@ -254,10 +321,10 @@ def generate_launch_description():
             parameters=[ekf_params],
             arguments=['--ros-args', '--log-level', navsat_log_level],
             remappings=[
-                ('/gps/fix', '/gps_rover/fix'),
-                ('/imu', '/gps/heading_corrected'),
-                ('/odometry/filtered', '/odometry/local'),
-                ('/odometry/gps', '/odometry/gps'),
+                ('gps/fix', '/gps_rover/fix'),
+                ('imu', '/gps/heading_corrected'),
+                ('odometry/filtered', '/odometry/global'),
+                ('odometry/gps', '/odometry/gps'),
             ],
         ),
         Node(

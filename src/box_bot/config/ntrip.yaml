@@ -1,16 +1,15 @@
 ntrip_client:
   ros__parameters:
-    # Local str2str raw RTCM TCP stream. Use mode: ntrip for caster URLs.
-    mode: tcp
-    host: 192.168.0.131
-    port: 5000
+    mode: ntrip
+    host: rtk2go.com
+    port: 2101
     mountpoint: "MtRavensbourne"
     ntrip_version: "Ntrip/2.0"
     user_agent: "NTRIP curl_test"
 
-    authenticate: false
+    authenticate: true
     username: "boland684@gmail.com"
-    password: "none"
+    password: "12d109897!"
 
     ssl: false
     cert: ""

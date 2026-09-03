@@ -4,7 +4,8 @@ gps_rover:
     device: /dev/boxbot/gps_rover
     frame_id: gps
     rate: 5.0
-    baudrate: 115200
+    uart1:
+      baudrate: 115200
     config_on_startup: false
     tmode3: 0
     inf:
@@ -12,9 +13,13 @@ gps_rover:
     publish:
       all: false
       nav:
+        cov: true
         pvt: true
         heading: true
         relposned: true
+        status: true
+      rxm:
+        rtcm: true
 
 gps_moving_base:
   ros__parameters:
@@ -22,7 +27,8 @@ gps_moving_base:
     device: /dev/boxbot/gps_moving_base
     frame_id: gps_moving_base
     rate: 5.0
-    baudrate: 115200
+    uart1:
+      baudrate: 115200
     config_on_startup: false
     inf:
       all: false
@@ -30,3 +36,6 @@ gps_moving_base:
       all: false
       nav:
         pvt: true
+        status: true
+      rxm:
+        rtcm: true

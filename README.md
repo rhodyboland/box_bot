@@ -1,7 +1,7 @@
 # box_bot
 Hoverboard powered ros2 robot
 ```
-git clone --recurse-submodules git@github.com:rhodyboland/box_bot.git
+git clone --recurse-submodules git@github.com:rhodyboland/box_bot.git -b orin_nano
 ```
 # packages:
 

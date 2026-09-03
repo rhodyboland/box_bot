@@ -33,7 +33,7 @@ if(BUILD_TESTING)
 endif()
 #config
 install(
-  DIRECTORY config launch behavior_trees
+  DIRECTORY config launch behavior_trees rviz
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -41,6 +41,7 @@ install(
   PROGRAMS
     scripts/gps_status_logger.py
     scripts/imu_yaw_offset.py
+    scripts/motion_chain_logger.py
     scripts/rtk2go_ntrip_client.py
   DESTINATION lib/${PROJECT_NAME}
 )

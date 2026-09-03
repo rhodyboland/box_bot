@@ -50,6 +50,7 @@ RUN apt-get update --allow-releaseinfo-change && \
       ros-humble-navigation2 \
       python3-serial \
       ros-humble-robot-localization \
+      ros-humble-diagnostic-updater \
       ros-humble-usb-cam \
       ros-humble-rqt \
       ros-humble-ros2-controllers \

@@ -104,7 +104,7 @@ cd $ISAAC_ROS_WS/src/box_bot
 
 Log out and back in after changing host groups.
 
-The rules set permissions for `/dev/i2c-*`, `/dev/gpiochip*`, `/dev/ttyTHS*`, `/dev/ttyUSB*`, and `/dev/ttyACM*`. The two u-blox receivers are pinned by physical USB port:
+The rules set permissions for `/dev/i2c-*`, `/dev/gpiochip*`, `/dev/gpiomem`, `/dev/ttyTHS*`, `/dev/ttyUSB*`, and `/dev/ttyACM*`. The hoverboard launch disables Jetson.GPIO's `/dev/mem` pinmux probe because pinmux is handled by the device-tree overlay. The two u-blox receivers are pinned by physical USB port:
 
 - `/dev/boxbot/gps_moving_base`: USB path `platform-3610000.usb-usb-0:2.2:1.0`
 - `/dev/boxbot/gps_rover`: USB path `platform-3610000.usb-usb-0:2.1:1.0`
@@ -115,7 +115,7 @@ Get updated serial device attributes with:
 ./list_serial_udev_attrs.sh
 ```
 
-The Isaac ROS dockerargs file mounts `/dev/boxbot` into the container. The container entrypoint also fixes GPIO/I2C/serial group access at startup based on the device nodes' numeric host GIDs.
+The Isaac ROS dockerargs file mounts `/dev/boxbot` into the container. The container entrypoint also fixes GPIO/I2C/serial/video group access at startup based on the device nodes' numeric host GIDs.
 
 ### Fresh Jetson restore checklist
 

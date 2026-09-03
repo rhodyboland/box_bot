@@ -67,5 +67,6 @@ done
 
 grant_device_family i2c 0660 'i2c-*'
 grant_device_family gpio 0660 'gpiochip*'
+grant_device_family gpio 0660 'gpiomem'
 grant_device_family dialout 0660 'ttyTHS*' 'ttyUSB*' 'ttyACM*'
 grant_device_family video 0660 'video*'
