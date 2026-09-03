@@ -17,6 +17,10 @@ def generate_launch_description():
     moving_base_device = LaunchConfiguration('moving_base_device')
     rover_baudrate = LaunchConfiguration('rover_baudrate')
     moving_base_baudrate = LaunchConfiguration('moving_base_baudrate')
+    navsat_fix_topic = LaunchConfiguration('navsat_fix_topic')
+    ntrip_fix_topic = LaunchConfiguration('ntrip_fix_topic')
+    rover_rtcm_topic = LaunchConfiguration('rover_rtcm_topic')
+    moving_base_rtcm_topic = LaunchConfiguration('moving_base_rtcm_topic')
     start_ntrip = LaunchConfiguration('start_ntrip')
     start_gps_status = LaunchConfiguration('start_gps_status')
     start_motion_chain_logger = LaunchConfiguration('start_motion_chain_logger')
@@ -59,6 +63,7 @@ def generate_launch_description():
         'reconnect_attempt_max': 10,
         'reconnect_attempt_wait_seconds': 5,
         'rtcm_timeout_seconds': 4,
+        'send_gga': False,
     }
 
     return LaunchDescription([
@@ -93,6 +98,10 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument('rover_baudrate', default_value='115200'),
         DeclareLaunchArgument('moving_base_baudrate', default_value='115200'),
+        DeclareLaunchArgument('navsat_fix_topic', default_value='/gps_rover/fix'),
+        DeclareLaunchArgument('ntrip_fix_topic', default_value='/gps_moving_base/fix'),
+        DeclareLaunchArgument('rover_rtcm_topic', default_value='/rtcm_rover_disabled'),
+        DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
         DeclareLaunchArgument('start_gps_status', default_value='true'),
         DeclareLaunchArgument('start_motion_chain_logger', default_value='false'),
@@ -144,7 +153,7 @@ def generate_launch_description():
                     condition=IfCondition(start_ntrip),
                     parameters=[ntrip_defaults, ntrip_params],
                     remappings=[
-                        ('fix', '/gps_rover/fix'),
+                        ('fix', ntrip_fix_topic),
                         ('nmea', '/gps/nmea'),
                         ('rtcm', '/rtcm'),
                     ],
@@ -177,7 +186,7 @@ def generate_launch_description():
                 ('navcov', '/gps_rover/navcov'),
                 ('nmea', '/gps/nmea'),
                 ('rxmrtcm', '/gps_rover/rxmrtcm'),
-                ('rtcm', '/rtcm'),
+                ('rtcm', rover_rtcm_topic),
             ],
         ),
         Node(
@@ -202,7 +211,7 @@ def generate_launch_description():
                 ('navstatus', '/gps_moving_base/navstatus'),
                 ('nmea', '/gps_moving_base/nmea'),
                 ('rxmrtcm', '/gps_moving_base/rxmrtcm'),
-                ('rtcm', '/rtcm'),
+                ('rtcm', moving_base_rtcm_topic),
             ],
         ),
 
@@ -321,7 +330,7 @@ def generate_launch_description():
             parameters=[ekf_params],
             arguments=['--ros-args', '--log-level', navsat_log_level],
             remappings=[
-                ('gps/fix', '/gps_rover/fix'),
+                ('gps/fix', navsat_fix_topic),
                 ('imu', '/gps/heading_corrected'),
                 ('odometry/filtered', '/odometry/global'),
                 ('odometry/gps', '/odometry/gps'),

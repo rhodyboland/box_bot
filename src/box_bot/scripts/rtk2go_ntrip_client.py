@@ -81,7 +81,7 @@ class Rtk2GoNtripClient(Node):
         self.declare_parameter('rtcm_frame_id', 'gps')
         self.declare_parameter('reconnect_attempt_wait_seconds', 5)
         self.declare_parameter('rtcm_timeout_seconds', 4)
-        self.declare_parameter('send_gga', True)
+        self.declare_parameter('send_gga', False)
         self.declare_parameter('gga_interval_seconds', 5)
         self.declare_parameter('ssl', False)
         self.declare_parameter('cert', '')

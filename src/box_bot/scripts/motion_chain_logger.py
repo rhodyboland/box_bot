@@ -73,6 +73,17 @@ def _age_seconds(now, stamp):
     return (now - stamp).nanoseconds * 1e-9
 
 
+def _latlon_delta_en_m(lat, lon, ref_lat, ref_lon):
+    radius_m = 6378137.0
+    east_m = (
+        math.radians(lon - ref_lon)
+        * radius_m
+        * math.cos(math.radians(ref_lat))
+    )
+    north_m = math.radians(lat - ref_lat) * radius_m
+    return east_m, north_m
+
+
 def _pvt_carrier_solution(flags):
     return CARRIER_SOLUTIONS.get((int(flags) & 0xC0) >> 6, 'reserved')
 
@@ -104,6 +115,12 @@ def _format(value, precision=6):
             return ''
         return f'{value:.{precision}f}'
     return value
+
+
+def _format_field(name, value):
+    if name.endswith('_lat_deg') or name.endswith('_lon_deg'):
+        return _format(value, 9)
+    return _format(value)
 
 
 class MotionChainLogger(Node):
@@ -333,13 +350,21 @@ class MotionChainLogger(Node):
                 f'{prefix}_fix_cov_z',
                 f'{prefix}_pvt_age_s',
                 f'{prefix}_pvt_itow_ms',
+                f'{prefix}_pvt_lat_deg',
+                f'{prefix}_pvt_lon_deg',
+                f'{prefix}_pvt_height_m',
+                f'{prefix}_pvt_h_msl_m',
                 f'{prefix}_pvt_fix_type',
                 f'{prefix}_pvt_carrier',
                 f'{prefix}_pvt_diff',
                 f'{prefix}_pvt_num_sv',
                 f'{prefix}_pvt_h_acc_m',
                 f'{prefix}_pvt_v_acc_m',
+                f'{prefix}_pvt_vel_n_mps',
+                f'{prefix}_pvt_vel_e_mps',
+                f'{prefix}_pvt_vel_d_mps',
                 f'{prefix}_pvt_g_speed_mps',
+                f'{prefix}_pvt_s_acc_mps',
                 f'{prefix}_pvt_head_mot_deg',
                 f'{prefix}_pvt_head_veh_deg',
                 f'{prefix}_pvt_head_acc_deg',
@@ -355,6 +380,14 @@ class MotionChainLogger(Node):
             ])
 
         fields.extend([
+            'dual_fix_baseline_e_m',
+            'dual_fix_baseline_n_m',
+            'dual_fix_baseline_length_m',
+            'dual_fix_baseline_heading_deg',
+            'dual_pvt_baseline_e_m',
+            'dual_pvt_baseline_n_m',
+            'dual_pvt_baseline_length_m',
+            'dual_pvt_baseline_heading_deg',
             'rover_cov_age_s',
             'rover_cov_itow_ms',
             'rover_cov_pos_valid',
@@ -394,10 +427,14 @@ class MotionChainLogger(Node):
         self._add_imus(row, now)
         self._add_relpos(row, now)
         self._add_gps(row, now)
+        self._add_dual_gps_baselines(row)
         self._add_nav_cov(row, now)
         self._add_transforms(row, now)
 
-        self._writer.writerow({name: _format(row.get(name)) for name in self._fields})
+        self._writer.writerow({
+            name: _format_field(name, row.get(name))
+            for name in self._fields
+        })
         self._samples += 1
         if self._samples % 10 == 0:
             self._csv_file.flush()
@@ -612,6 +649,10 @@ class MotionChainLogger(Node):
             if pvt is not None:
                 flags = int(pvt.flags)
                 row[f'{prefix}_pvt_itow_ms'] = pvt.i_tow
+                row[f'{prefix}_pvt_lat_deg'] = float(pvt.lat) * 1.0e-7
+                row[f'{prefix}_pvt_lon_deg'] = float(pvt.lon) * 1.0e-7
+                row[f'{prefix}_pvt_height_m'] = float(pvt.height) * 0.001
+                row[f'{prefix}_pvt_h_msl_m'] = float(pvt.h_msl) * 0.001
                 row[f'{prefix}_pvt_fix_type'] = FIX_TYPES.get(
                     int(pvt.fix_type),
                     int(pvt.fix_type),
@@ -621,7 +662,11 @@ class MotionChainLogger(Node):
                 row[f'{prefix}_pvt_num_sv'] = pvt.num_sv
                 row[f'{prefix}_pvt_h_acc_m'] = float(pvt.h_acc) * 0.001
                 row[f'{prefix}_pvt_v_acc_m'] = float(pvt.v_acc) * 0.001
+                row[f'{prefix}_pvt_vel_n_mps'] = float(pvt.vel_n) * 0.001
+                row[f'{prefix}_pvt_vel_e_mps'] = float(pvt.vel_e) * 0.001
+                row[f'{prefix}_pvt_vel_d_mps'] = float(pvt.vel_d) * 0.001
                 row[f'{prefix}_pvt_g_speed_mps'] = float(pvt.g_speed) * 0.001
+                row[f'{prefix}_pvt_s_acc_mps'] = float(pvt.s_acc) * 0.001
                 row[f'{prefix}_pvt_head_mot_deg'] = float(pvt.heading) * 1.0e-5
                 row[f'{prefix}_pvt_head_veh_deg'] = float(pvt.head_veh) * 1.0e-5
                 row[f'{prefix}_pvt_head_acc_deg'] = float(pvt.head_acc) * 1.0e-5
@@ -646,6 +691,43 @@ class MotionChainLogger(Node):
                 row[f'{prefix}_rtcm_crc_ok'] = not bool(
                     int(rtcm.flags) & int(rtcm.FLAGS_CRC_FAILED)
                 )
+
+    def _add_dual_gps_baselines(self, row):
+        rover_fix, _ = self._latest_msg('rover_fix')
+        moving_base_fix, _ = self._latest_msg('moving_base_fix')
+        if rover_fix is not None and moving_base_fix is not None:
+            east_m, north_m = _latlon_delta_en_m(
+                moving_base_fix.latitude,
+                moving_base_fix.longitude,
+                rover_fix.latitude,
+                rover_fix.longitude,
+            )
+            row['dual_fix_baseline_e_m'] = east_m
+            row['dual_fix_baseline_n_m'] = north_m
+            row['dual_fix_baseline_length_m'] = math.hypot(east_m, north_m)
+            row['dual_fix_baseline_heading_deg'] = (
+                math.degrees(math.atan2(east_m, north_m)) + 360.0
+            ) % 360.0
+
+        rover_pvt, _ = self._latest_msg('rover_pvt')
+        moving_base_pvt, _ = self._latest_msg('moving_base_pvt')
+        if rover_pvt is not None and moving_base_pvt is not None:
+            rover_lat = float(rover_pvt.lat) * 1.0e-7
+            rover_lon = float(rover_pvt.lon) * 1.0e-7
+            moving_base_lat = float(moving_base_pvt.lat) * 1.0e-7
+            moving_base_lon = float(moving_base_pvt.lon) * 1.0e-7
+            east_m, north_m = _latlon_delta_en_m(
+                moving_base_lat,
+                moving_base_lon,
+                rover_lat,
+                rover_lon,
+            )
+            row['dual_pvt_baseline_e_m'] = east_m
+            row['dual_pvt_baseline_n_m'] = north_m
+            row['dual_pvt_baseline_length_m'] = math.hypot(east_m, north_m)
+            row['dual_pvt_baseline_heading_deg'] = (
+                math.degrees(math.atan2(east_m, north_m)) + 360.0
+            ) % 360.0
 
     def _add_nav_cov(self, row, now):
         msg, stamp = self._latest_msg('rover_cov')
@@ -729,6 +811,10 @@ class MotionChainLogger(Node):
                     f'valid={row.get("relpos_heading_valid", "")} '
                     f'carr={row.get("relpos_carrier", "")} '
                     f'age={_format(row.get("relpos_age_s"), 1)}'
+                ),
+                (
+                    'fix_base '
+                    f'len={_format(row.get("dual_fix_baseline_length_m"), 2)}'
                 ),
                 (
                     'tf '

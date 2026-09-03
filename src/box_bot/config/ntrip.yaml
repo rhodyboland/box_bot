@@ -22,6 +22,7 @@ ntrip_client:
     nmea_min_length: 3
     validate_rtcm_crc: true
     log_rtcm_interval: 50
+    send_gga: false
     reconnect_attempt_max: 10
     reconnect_attempt_wait_seconds: 5
     rtcm_timeout_seconds: 4
