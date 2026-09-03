@@ -109,6 +109,10 @@ The rules set permissions for `/dev/i2c-*`, `/dev/gpiochip*`, `/dev/gpiomem`, `/
 - `/dev/boxbot/gps_moving_base`: USB path `platform-3610000.usb-usb-0:2.2:1.0`
 - `/dev/boxbot/gps_rover`: USB path `platform-3610000.usb-usb-0:2.1:1.0`
 
+The SLLIDAR C1 is pinned by its CP2102N USB serial:
+
+- `/dev/boxbot/lidar`: serial `f8027a42ffe5ed119038daa80b2af5ab`
+
 Get updated serial device attributes with:
 
 ```
@@ -154,7 +158,6 @@ fusion output to the existing robot topics:
 ### Old manual workaround
 ```
 sudo chmod 666 /dev/ttyTHS1
-sudo chmod 666 /dev/ttyUSB0
 sudo chmod 666 /dev/ttyACM0
 
 ```

@@ -21,6 +21,13 @@ def generate_launch_description():
     ntrip_fix_topic = LaunchConfiguration('ntrip_fix_topic')
     rover_rtcm_topic = LaunchConfiguration('rover_rtcm_topic')
     moving_base_rtcm_topic = LaunchConfiguration('moving_base_rtcm_topic')
+    start_lidar = LaunchConfiguration('start_lidar')
+    lidar_serial_port = LaunchConfiguration('lidar_serial_port')
+    lidar_serial_baudrate = LaunchConfiguration('lidar_serial_baudrate')
+    lidar_frame_id = LaunchConfiguration('lidar_frame_id')
+    lidar_inverted = LaunchConfiguration('lidar_inverted')
+    lidar_angle_compensate = LaunchConfiguration('lidar_angle_compensate')
+    lidar_scan_mode = LaunchConfiguration('lidar_scan_mode')
     start_ntrip = LaunchConfiguration('start_ntrip')
     start_gps_status = LaunchConfiguration('start_gps_status')
     start_motion_chain_logger = LaunchConfiguration('start_motion_chain_logger')
@@ -102,6 +109,13 @@ def generate_launch_description():
         DeclareLaunchArgument('ntrip_fix_topic', default_value='/gps_moving_base/fix'),
         DeclareLaunchArgument('rover_rtcm_topic', default_value='/rtcm_rover_disabled'),
         DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
+        DeclareLaunchArgument('start_lidar', default_value='true'),
+        DeclareLaunchArgument('lidar_serial_port', default_value='/dev/boxbot/lidar'),
+        DeclareLaunchArgument('lidar_serial_baudrate', default_value='460800'),
+        DeclareLaunchArgument('lidar_frame_id', default_value='laser'),
+        DeclareLaunchArgument('lidar_inverted', default_value='false'),
+        DeclareLaunchArgument('lidar_angle_compensate', default_value='true'),
+        DeclareLaunchArgument('lidar_scan_mode', default_value='Standard'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
         DeclareLaunchArgument('start_gps_status', default_value='true'),
         DeclareLaunchArgument('start_motion_chain_logger', default_value='false'),
@@ -140,6 +154,22 @@ def generate_launch_description():
                     FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py'
                 ])
             )
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                PathJoinSubstitution([
+                    FindPackageShare('sllidar_ros2'), 'launch', 'sllidar_c1_launch.py'
+                ])
+            ),
+            condition=IfCondition(start_lidar),
+            launch_arguments={
+                'serial_port': lidar_serial_port,
+                'serial_baudrate': lidar_serial_baudrate,
+                'frame_id': lidar_frame_id,
+                'inverted': lidar_inverted,
+                'angle_compensate': lidar_angle_compensate,
+                'scan_mode': lidar_scan_mode,
+            }.items(),
         ),
 
         TimerAction(

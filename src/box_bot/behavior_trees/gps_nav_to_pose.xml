@@ -1,7 +1,7 @@
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <PipelineSequence name="GpsNavigateToPose">
-      <RateController hz="0.05">
+      <RateController hz="1.0">
         <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
       </RateController>
       <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker"/>
