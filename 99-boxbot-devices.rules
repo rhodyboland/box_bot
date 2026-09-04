@@ -23,3 +23,8 @@ SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01a9", ENV{ID_PA
 #
 # Stable name for the SLLIDAR C1 USB adapter.
 SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="10c4", ENV{ID_MODEL_ID}=="ea60", ENV{ID_SERIAL_SHORT}=="f8027a42ffe5ed119038daa80b2af5ab", SYMLINK+="boxbot/lidar", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
+
+# Intel RealSense cameras expose video nodes plus raw USB interfaces. The ROS
+# wrapper/librealsense needs access to both from inside the container.
+SUBSYSTEM=="usb", ATTR{idVendor}=="8086", GROUP="video", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="video4linux", ATTRS{idVendor}=="8086", GROUP="video", MODE="0660", TAG+="uaccess"

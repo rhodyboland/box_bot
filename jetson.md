@@ -121,6 +121,37 @@ Get updated serial device attributes with:
 
 The Isaac ROS dockerargs file mounts `/dev/boxbot` into the container. The container entrypoint also fixes GPIO/I2C/serial/video group access at startup based on the device nodes' numeric host GIDs.
 
+### RealSense D455
+
+The GPS Nav2 launch now starts the front D455 by default and uses its point
+cloud for the local costmap instead of the daylight-sensitive SLLIDAR:
+
+```
+ros2 launch box_bot box_bot_nav_gps.launch.py
+```
+
+Use the Isaac ROS RealSense setup for release 3.2 so the container includes the
+pinned firmware/librealsense/realsense-ros versions:
+
+```
+cd ${ISAAC_ROS_WS}/src/isaac_ros_common/scripts
+touch .isaac_ros_common-config
+echo CONFIG_IMAGE_KEY=ros2_humble.realsense > .isaac_ros_common-config
+```
+
+Then restart the Isaac ROS container with the D455 plugged in. The expected
+obstacle cloud topic is:
+
+```
+/camera/camera/depth/color/points
+```
+
+If you want to compare the old scanner in RViz while the D455 drives Nav2:
+
+```
+ros2 launch box_bot box_bot_nav_gps.launch.py start_lidar:=true
+```
+
 ### Fresh Jetson restore checklist
 
 After flashing JetPack and pulling this repo:

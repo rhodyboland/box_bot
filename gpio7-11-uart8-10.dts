@@ -15,9 +15,10 @@
                 /* Pin 7 → soc_gpio59_pac6 as bidirectional GPIO (input enabled) */
                 hdr40-pin7 {
                     nvidia,pins         = "soc_gpio59_pac6";
-                    nvidia,tristate     = <0x0>;
+                    nvidia,tristate     = <0x1>;
                     nvidia,enable-input = <0x1>;
                     nvidia,pull         = <0x0>;
+                    nvidia,schmitt      = <0x1>;
                 };
                 /* Pin 11 → uart1_rts_pr4 repurposed as GPIO output */
                 hdr40-pin11 {

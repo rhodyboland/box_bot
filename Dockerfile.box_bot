@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 SHELL ["/bin/bash", "-c"]
 
+ARG LIBREALSENSE_SOURCE_VERSION=v2.55.1
+
 # Fix apt repo metadata/key issues inherited from base image
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg \
@@ -22,14 +24,28 @@ RUN apt-get install -y --no-install-recommends curl gnupg lsb-release && \
 
 RUN apt-get update --allow-releaseinfo-change && \
     apt-get install -y --no-install-recommends \
+      build-essential \
+      cmake \
+      git \
+      libeigen3-dev \
       libi2c-dev \
+      libgl1-mesa-dev \
+      libglfw3-dev \
+      libglu1-mesa-dev \
+      libgtk-3-dev \
+      libssl-dev \
+      libudev-dev \
+      libusb-1.0-0-dev \
       gpsd-clients \
+      pkg-config \
       rtklib \
+      python3-dev \
       ros-humble-teleop-twist-joy \
       ros-humble-teleop-twist-keyboard \
       ros-humble-hardware-interface \
       ros-humble-pluginlib \
       ros-humble-rclcpp \
+      ros-humble-rclcpp-components \
       ros-humble-rclcpp-lifecycle \
       ros-humble-ros2-controllers-test-nodes \
       ros-humble-controller-manager \
@@ -42,6 +58,8 @@ RUN apt-get update --allow-releaseinfo-change && \
       ros-humble-xacro \
       i2c-tools \
       ros-humble-sensor-msgs \
+      ros-humble-cv-bridge \
+      ros-humble-image-transport \
       ros-humble-nmea-navsat-driver \
       ros-humble-imu-tools \
       ros-humble-std-srvs \
@@ -51,11 +69,40 @@ RUN apt-get update --allow-releaseinfo-change && \
       python3-serial \
       ros-humble-robot-localization \
       ros-humble-diagnostic-updater \
+      ros-humble-rosidl-default-generators \
       ros-humble-usb-cam \
       ros-humble-rqt \
       ros-humble-ros2-controllers \
+      ros-humble-tf2 \
       ros-humble-ntrip-client && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Isaac ROS 3.2 pins RealSense to librealsense v2.55.1. The ROS wrapper
+# lives in this workspace as a submodule so colcon can build it with Box Bot.
+RUN git clone --depth 1 --branch ${LIBREALSENSE_SOURCE_VERSION} \
+      https://github.com/IntelRealSense/librealsense.git /tmp/librealsense && \
+    if [[ -x /usr/local/cuda/bin/nvcc ]]; then \
+      export CUDACXX=/usr/local/cuda/bin/nvcc && \
+      cmake -S /tmp/librealsense -B /tmp/librealsense/build \
+        -DBUILD_EXAMPLES=false \
+        -DBUILD_GRAPHICAL_EXAMPLES=false \
+        -DFORCE_RSUSB_BACKEND=true \
+        -DBUILD_WITH_CUDA=true \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_PYTHON_BINDINGS=bool:true; \
+    else \
+      cmake -S /tmp/librealsense -B /tmp/librealsense/build \
+        -DBUILD_EXAMPLES=false \
+        -DBUILD_GRAPHICAL_EXAMPLES=false \
+        -DFORCE_RSUSB_BACKEND=true \
+        -DBUILD_WITH_CUDA=false \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_PYTHON_BINDINGS=bool:true; \
+    fi && \
+    cmake --build /tmp/librealsense/build --parallel "$(nproc)" || \
+      cmake --build /tmp/librealsense/build && \
+    cmake --install /tmp/librealsense/build && \
+    rm -rf /tmp/librealsense
 
 # Use the source KumarRobotics ublox driver instead of the Humble apt package.
 # The source ROS 2 branch exposes RTCM input; the Humble binary package in this

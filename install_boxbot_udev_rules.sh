@@ -36,8 +36,9 @@ add_docker_arg() {
 }
 
 add_docker_arg '-v /dev/boxbot:/dev/boxbot'
+add_docker_arg '-v /dev/bus/usb:/dev/bus/usb'
 
 echo "Installed ${RULES_DST}"
 echo "Added ${HOST_USER} to dialout,gpio,i2c,video,plugdev."
-echo "Updated ${DOCKERARGS_FILE} to mount /dev/boxbot into Isaac ROS containers."
+echo "Updated ${DOCKERARGS_FILE} to mount /dev/boxbot and /dev/bus/usb into Isaac ROS containers."
 echo "Log out and back in for new host group membership to apply."

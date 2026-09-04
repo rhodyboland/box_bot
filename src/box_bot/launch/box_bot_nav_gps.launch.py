@@ -28,6 +28,15 @@ def generate_launch_description():
     lidar_inverted = LaunchConfiguration('lidar_inverted')
     lidar_angle_compensate = LaunchConfiguration('lidar_angle_compensate')
     lidar_scan_mode = LaunchConfiguration('lidar_scan_mode')
+    start_realsense = LaunchConfiguration('start_realsense')
+    realsense_camera_namespace = LaunchConfiguration('realsense_camera_namespace')
+    realsense_camera_name = LaunchConfiguration('realsense_camera_name')
+    realsense_serial_no = LaunchConfiguration('realsense_serial_no')
+    realsense_depth_profile = LaunchConfiguration('realsense_depth_profile')
+    realsense_color_profile = LaunchConfiguration('realsense_color_profile')
+    realsense_clip_distance = LaunchConfiguration('realsense_clip_distance')
+    realsense_emitter_enabled = LaunchConfiguration('realsense_emitter_enabled')
+    realsense_initial_reset = LaunchConfiguration('realsense_initial_reset')
     start_ntrip = LaunchConfiguration('start_ntrip')
     start_gps_status = LaunchConfiguration('start_gps_status')
     start_motion_chain_logger = LaunchConfiguration('start_motion_chain_logger')
@@ -109,13 +118,23 @@ def generate_launch_description():
         DeclareLaunchArgument('ntrip_fix_topic', default_value='/gps_moving_base/fix'),
         DeclareLaunchArgument('rover_rtcm_topic', default_value='/rtcm_rover_disabled'),
         DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
-        DeclareLaunchArgument('start_lidar', default_value='true'),
+        DeclareLaunchArgument('start_lidar', default_value='false'),
         DeclareLaunchArgument('lidar_serial_port', default_value='/dev/boxbot/lidar'),
         DeclareLaunchArgument('lidar_serial_baudrate', default_value='460800'),
         DeclareLaunchArgument('lidar_frame_id', default_value='laser'),
         DeclareLaunchArgument('lidar_inverted', default_value='false'),
         DeclareLaunchArgument('lidar_angle_compensate', default_value='true'),
         DeclareLaunchArgument('lidar_scan_mode', default_value='Standard'),
+        DeclareLaunchArgument('start_realsense', default_value='true'),
+        DeclareLaunchArgument('realsense_camera_namespace', default_value='camera'),
+        DeclareLaunchArgument('realsense_camera_name', default_value='camera'),
+        DeclareLaunchArgument('realsense_serial_no', default_value=''),
+        DeclareLaunchArgument('realsense_depth_profile', default_value='640x480x30'),
+        DeclareLaunchArgument('realsense_color_profile', default_value='640x480x30'),
+        DeclareLaunchArgument('realsense_clip_distance', default_value='6.0'),
+        # Daylight usually overwhelms the active IR projector; passive stereo is cleaner outside.
+        DeclareLaunchArgument('realsense_emitter_enabled', default_value='0'),
+        DeclareLaunchArgument('realsense_initial_reset', default_value='true'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
         DeclareLaunchArgument('start_gps_status', default_value='true'),
         DeclareLaunchArgument('start_motion_chain_logger', default_value='false'),
@@ -170,6 +189,58 @@ def generate_launch_description():
                 'angle_compensate': lidar_angle_compensate,
                 'scan_mode': lidar_scan_mode,
             }.items(),
+        ),
+        Node(
+            package='realsense2_camera',
+            executable='realsense2_camera_node',
+            namespace=realsense_camera_namespace,
+            name=realsense_camera_name,
+            output='screen',
+            condition=IfCondition(start_realsense),
+            parameters=[{
+                'camera_name': ParameterValue(
+                    realsense_camera_name,
+                    value_type=str
+                ),
+                'serial_no': ParameterValue(realsense_serial_no, value_type=str),
+                'enable_depth': True,
+                'enable_color': True,
+                'enable_infra1': False,
+                'enable_infra2': False,
+                'enable_gyro': False,
+                'enable_accel': False,
+                'depth_module.profile': ParameterValue(
+                    realsense_depth_profile,
+                    value_type=str
+                ),
+                'rgb_camera.profile': ParameterValue(
+                    realsense_color_profile,
+                    value_type=str
+                ),
+                'depth_module.emitter_enabled': ParameterValue(
+                    realsense_emitter_enabled,
+                    value_type=int
+                ),
+                'clip_distance': ParameterValue(
+                    realsense_clip_distance,
+                    value_type=float
+                ),
+                'initial_reset': ParameterValue(
+                    realsense_initial_reset,
+                    value_type=bool
+                ),
+                'pointcloud.enable': True,
+                'pointcloud.allow_no_texture_points': True,
+                'pointcloud.ordered_pc': False,
+                'pointcloud.pointcloud_qos': 'SENSOR_DATA',
+                'allow_no_texture_points': True,
+                'align_depth.enable': True,
+                'enable_sync': True,
+                'spatial_filter.enable': True,
+                'temporal_filter.enable': True,
+                'decimation_filter.enable': True,
+            }],
+            arguments=['--ros-args', '--log-level', log_level],
         ),
 
         TimerAction(

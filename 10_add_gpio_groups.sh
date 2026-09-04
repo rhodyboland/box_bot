@@ -61,6 +61,36 @@ grant_device_family() {
     echo "Granted ${USERNAME} ${actual_group} access to: ${devices[*]}"
 }
 
+grant_device_tree() {
+    local group_name="$1"
+    local mode="$2"
+    local root="$3"
+
+    [[ -d "${root}" ]] || return 0
+
+    local devices=()
+    while IFS= read -r -d '' dev; do
+        devices+=("${dev}")
+    done < <(find "${root}" -type c -print0 2>/dev/null)
+
+    [[ ${#devices[@]} -gt 0 ]] || return 0
+
+    local gid
+    gid="$(stat -c '%g' "${devices[0]}")"
+
+    local actual_group
+    actual_group="$(ensure_gid_group "${group_name}" "${gid}")"
+    usermod -aG "${actual_group}" "${USERNAME}" 2>/dev/null || true
+
+    local dev
+    for dev in "${devices[@]}"; do
+        chgrp "${actual_group}" "${dev}" 2>/dev/null || true
+        chmod "${mode}" "${dev}" 2>/dev/null || true
+    done
+
+    echo "Granted ${USERNAME} ${actual_group} access to devices under ${root}"
+}
+
 for group_name in dialout gpio i2c video plugdev; do
     ensure_group_name "${group_name}"
 done
@@ -70,3 +100,4 @@ grant_device_family gpio 0660 'gpiochip*'
 grant_device_family gpio 0660 'gpiomem'
 grant_device_family dialout 0660 'ttyTHS*' 'ttyUSB*' 'ttyACM*'
 grant_device_family video 0660 'video*'
+grant_device_tree video 0660 '/dev/bus/usb'
