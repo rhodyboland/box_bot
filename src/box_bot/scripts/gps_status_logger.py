@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
 import math
+import signal
 
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import ExternalShutdownException
 from sensor_msgs.msg import Imu, NavSatFix
-from ublox_msgs.msg import MonHW, NavPVT, NavRELPOSNED, NavSAT, RxmRTCM
-
-try:
-    from ublox_msgs.msg import NavRELPOSNED9
-except ImportError:
-    NavRELPOSNED9 = None
+from ublox_ubx_msgs.msg import UBXNavPVT, UBXNavRelPosNED, UBXNavSat, UBXRxmCor, UBXSecSig
+from gnss_helpers import pvt_flags, relpos_flags
 
 
 FIX_TYPES = {
@@ -55,14 +53,14 @@ class GpsStatusLogger(Node):
         self.declare_parameter('rover_fix_topic', '/gps_rover/fix')
         self.declare_parameter('rover_navpvt_topic', '/gps_rover/navpvt')
         self.declare_parameter('rover_navsat_topic', '/gps_rover/navsat')
-        self.declare_parameter('rover_monhw_topic', '/gps_rover/monhw')
+        self.declare_parameter('rover_secsig_topic', '/gps_rover/secsig')
         self.declare_parameter('moving_base_fix_topic', '/gps_moving_base/fix')
         self.declare_parameter('moving_base_navpvt_topic', '/gps_moving_base/navpvt')
         self.declare_parameter('moving_base_navsat_topic', '/gps_moving_base/navsat')
-        self.declare_parameter('moving_base_monhw_topic', '/gps_moving_base/monhw')
+        self.declare_parameter('moving_base_secsig_topic', '/gps_moving_base/secsig')
         self.declare_parameter('relposned_topic', '/gps/relposned')
-        self.declare_parameter('rover_rxmrtcm_topic', '/gps_rover/rxmrtcm')
-        self.declare_parameter('moving_base_rxmrtcm_topic', '/gps_moving_base/rxmrtcm')
+        self.declare_parameter('rover_rxmcor_topic', '/gps_rover/rxmcor')
+        self.declare_parameter('moving_base_rxmcor_topic', '/gps_moving_base/rxmcor')
         self.declare_parameter('corrected_heading_topic', '/gps/heading_corrected')
 
         self._rover_fix = None
@@ -71,22 +69,22 @@ class GpsStatusLogger(Node):
         self._rover_time = None
         self._rover_navsat = None
         self._rover_navsat_time = None
-        self._rover_monhw = None
-        self._rover_monhw_time = None
+        self._rover_secsig = None
+        self._rover_secsig_time = None
         self._moving_base_fix = None
         self._moving_base_fix_time = None
         self._moving_base = None
         self._moving_base_time = None
         self._moving_base_navsat = None
         self._moving_base_navsat_time = None
-        self._moving_base_monhw = None
-        self._moving_base_monhw_time = None
+        self._moving_base_secsig = None
+        self._moving_base_secsig_time = None
         self._relpos = None
         self._relpos_time = None
-        self._rover_rxmrtcm = None
-        self._rover_rxmrtcm_time = None
-        self._moving_base_rxmrtcm = None
-        self._moving_base_rxmrtcm_time = None
+        self._rover_rxmcor = None
+        self._rover_rxmcor_time = None
+        self._moving_base_rxmcor = None
+        self._moving_base_rxmcor_time = None
         self._corrected_heading = None
         self._corrected_heading_time = None
 
@@ -97,21 +95,21 @@ class GpsStatusLogger(Node):
             10,
         )
         self.create_subscription(
-            NavPVT,
+            UBXNavPVT,
             self.get_parameter('rover_navpvt_topic').value,
             self._rover_callback,
             10,
         )
         self.create_subscription(
-            NavSAT,
+            UBXNavSat,
             self.get_parameter('rover_navsat_topic').value,
             self._rover_navsat_callback,
             10,
         )
         self.create_subscription(
-            MonHW,
-            self.get_parameter('rover_monhw_topic').value,
-            self._rover_monhw_callback,
+            UBXSecSig,
+            self.get_parameter('rover_secsig_topic').value,
+            self._rover_secsig_callback,
             10,
         )
         self.create_subscription(
@@ -121,33 +119,33 @@ class GpsStatusLogger(Node):
             10,
         )
         self.create_subscription(
-            NavPVT,
+            UBXNavPVT,
             self.get_parameter('moving_base_navpvt_topic').value,
             self._moving_base_callback,
             10,
         )
         self.create_subscription(
-            NavSAT,
+            UBXNavSat,
             self.get_parameter('moving_base_navsat_topic').value,
             self._moving_base_navsat_callback,
             10,
         )
         self.create_subscription(
-            MonHW,
-            self.get_parameter('moving_base_monhw_topic').value,
-            self._moving_base_monhw_callback,
+            UBXSecSig,
+            self.get_parameter('moving_base_secsig_topic').value,
+            self._moving_base_secsig_callback,
             10,
         )
         self.create_subscription(
-            RxmRTCM,
-            self.get_parameter('rover_rxmrtcm_topic').value,
-            self._rover_rxmrtcm_callback,
+            UBXRxmCor,
+            self.get_parameter('rover_rxmcor_topic').value,
+            self._rover_rxmcor_callback,
             10,
         )
         self.create_subscription(
-            RxmRTCM,
-            self.get_parameter('moving_base_rxmrtcm_topic').value,
-            self._moving_base_rxmrtcm_callback,
+            UBXRxmCor,
+            self.get_parameter('moving_base_rxmcor_topic').value,
+            self._moving_base_rxmcor_callback,
             10,
         )
         self.create_subscription(
@@ -156,9 +154,8 @@ class GpsStatusLogger(Node):
             self._corrected_heading_callback,
             10,
         )
-        relpos_msg_type = NavRELPOSNED9 if NavRELPOSNED9 is not None else NavRELPOSNED
         self.create_subscription(
-            relpos_msg_type,
+            UBXNavRelPosNED,
             self.get_parameter('relposned_topic').value,
             self._relpos_callback,
             10,
@@ -180,9 +177,9 @@ class GpsStatusLogger(Node):
         self._rover_navsat = msg
         self._rover_navsat_time = self.get_clock().now()
 
-    def _rover_monhw_callback(self, msg):
-        self._rover_monhw = msg
-        self._rover_monhw_time = self.get_clock().now()
+    def _rover_secsig_callback(self, msg):
+        self._rover_secsig = msg
+        self._rover_secsig_time = self.get_clock().now()
 
     def _moving_base_fix_callback(self, msg):
         self._moving_base_fix = msg
@@ -196,21 +193,21 @@ class GpsStatusLogger(Node):
         self._moving_base_navsat = msg
         self._moving_base_navsat_time = self.get_clock().now()
 
-    def _moving_base_monhw_callback(self, msg):
-        self._moving_base_monhw = msg
-        self._moving_base_monhw_time = self.get_clock().now()
+    def _moving_base_secsig_callback(self, msg):
+        self._moving_base_secsig = msg
+        self._moving_base_secsig_time = self.get_clock().now()
 
     def _relpos_callback(self, msg):
         self._relpos = msg
         self._relpos_time = self.get_clock().now()
 
-    def _rover_rxmrtcm_callback(self, msg):
-        self._rover_rxmrtcm = msg
-        self._rover_rxmrtcm_time = self.get_clock().now()
+    def _rover_rxmcor_callback(self, msg):
+        self._rover_rxmcor = msg
+        self._rover_rxmcor_time = self.get_clock().now()
 
-    def _moving_base_rxmrtcm_callback(self, msg):
-        self._moving_base_rxmrtcm = msg
-        self._moving_base_rxmrtcm_time = self.get_clock().now()
+    def _moving_base_rxmcor_callback(self, msg):
+        self._moving_base_rxmcor = msg
+        self._moving_base_rxmcor_time = self.get_clock().now()
 
     def _corrected_heading_callback(self, msg):
         self._corrected_heading = msg
@@ -245,8 +242,8 @@ class GpsStatusLogger(Node):
         if msg is None:
             return self._format_fix(label, fix_msg)
 
-        flags = int(msg.flags)
-        fix_type = FIX_TYPES.get(int(msg.fix_type), f'unknown({msg.fix_type})')
+        flags = pvt_flags(msg)
+        fix_type = FIX_TYPES.get(int(msg.gps_fix.fix_type), f'unknown({msg.gps_fix.fix_type})')
         carr = _pvt_carrier_solution(flags)
         diff = _yes_no(flags & 0x02)
         h_acc_m = float(msg.h_acc) / 1000.0
@@ -263,7 +260,7 @@ class GpsStatusLogger(Node):
         if msg is None:
             return 'baseline: waiting'
 
-        flags = int(msg.flags)
+        flags = relpos_flags(msg)
         length_m = float(msg.rel_pos_length) * 0.01 + float(msg.rel_pos_hp_length) * 0.0001
         heading_deg = math.fmod(float(msg.rel_pos_heading) * 1.0e-5, 360.0)
         heading_acc_deg = float(msg.acc_heading) * 1.0e-5
@@ -278,15 +275,14 @@ class GpsStatusLogger(Node):
             f'{self._age(self._relpos_time)}'
         )
 
-    def _format_rxmrtcm(self, label, msg, stamp):
+    def _format_rxmcor(self, label, msg, stamp):
         if msg is None:
-            return f'{label}_rtcm: waiting'
-
-        crc = 'bad_crc' if int(msg.flags) & int(msg.FLAGS_CRC_FAILED) else 'ok'
-        return (
-            f'{label}_rtcm: {crc} msg={msg.msg_type} '
-            f'ref={msg.ref_station} flags={int(msg.flags)} {self._age(stamp)}'
-        )
+            return f'{label}_cor: waiting'
+        status = msg.status_info
+        error = {0: 'unknown', 1: 'ok', 2: 'error'}.get(status.err_status, 'reserved')
+        used = {0: 'unknown', 1: 'no', 2: 'yes'}.get(status.msg_used, 'reserved')
+        return (f'{label}_cor: {error} used={used} protocol={status.protocol} '
+                f'msg={msg.msg_type} ref={status.correction_id} {self._age(stamp)}')
 
     def _format_navsat(self, label, msg, stamp):
         if msg is None:
@@ -296,14 +292,13 @@ class GpsStatusLogger(Node):
         carrier_locked = 0
         cno_sum = 0
         cno_count = 0
-        for sv in msg.sv:
-            flags = int(sv.flags)
-            quality = flags & int(sv.FLAGS_QUALITY_IND_MASK)
-            if flags & int(sv.FLAGS_SV_USED):
+        for sv in msg.sv_info:
+            quality = sv.flags.quality_ind
+            if sv.flags.sv_used:
                 used += 1
                 cno_sum += int(sv.cno)
                 cno_count += 1
-            if quality >= int(sv.QUALITY_IND_CODE_AND_CARR_LOCK_AND_TIME_SYNC1):
+            if quality >= 5:
                 carrier_locked += 1
 
         avg_cno = cno_sum / cno_count if cno_count else 0.0
@@ -313,23 +308,13 @@ class GpsStatusLogger(Node):
             f'{self._age(stamp)}'
         )
 
-    def _format_monhw(self, label, msg, stamp):
+    def _format_secsig(self, label, msg, stamp):
         if msg is None:
-            return f'{label}_hw: waiting'
-
-        flags = int(msg.flags)
-        jamming_state = flags & int(msg.FLAGS_JAMMING_STATE_MASK)
-        jamming_text = {
-            int(msg.JAMMING_STATE_UNKNOWN_OR_DISABLED): 'unknown',
-            int(msg.JAMMING_STATE_OK): 'ok',
-            int(msg.JAMMING_STATE_WARNING): 'warn',
-            int(msg.JAMMING_STATE_CRITICAL): 'critical',
-        }.get(jamming_state, f'unknown({jamming_state})')
-        return (
-            f'{label}_hw: noise={msg.noise_per_ms} agc={msg.agc_cnt} '
-            f'jam={msg.jam_ind} jam_state={jamming_text} '
-            f'ant={msg.a_status}/{msg.a_power} flags={flags} {self._age(stamp)}'
-        )
+            return f'{label}_security: waiting'
+        return (f'{label}_security: jam={msg.jamming_state} '
+                f'jam_detection={bool(msg.jam_det_enabled)} '
+                f'spoof={msg.spoofing_state} spoof_detection={bool(msg.spf_det_enabled)} '
+                f'{self._age(stamp)}')
 
     def _format_corrected_heading(self):
         msg = self._corrected_heading
@@ -370,25 +355,25 @@ class GpsStatusLogger(Node):
                     self._moving_base_navsat,
                     self._moving_base_navsat_time,
                 ),
-                self._format_monhw(
+                self._format_secsig(
                     'rover',
-                    self._rover_monhw,
-                    self._rover_monhw_time,
+                    self._rover_secsig,
+                    self._rover_secsig_time,
                 ),
-                self._format_monhw(
+                self._format_secsig(
                     'moving_base',
-                    self._moving_base_monhw,
-                    self._moving_base_monhw_time,
+                    self._moving_base_secsig,
+                    self._moving_base_secsig_time,
                 ),
-                self._format_rxmrtcm(
+                self._format_rxmcor(
                     'rover',
-                    self._rover_rxmrtcm,
-                    self._rover_rxmrtcm_time,
+                    self._rover_rxmcor,
+                    self._rover_rxmcor_time,
                 ),
-                self._format_rxmrtcm(
+                self._format_rxmcor(
                     'moving_base',
-                    self._moving_base_rxmrtcm,
-                    self._moving_base_rxmrtcm_time,
+                    self._moving_base_rxmcor,
+                    self._moving_base_rxmcor_time,
                 ),
                 f'rtcm_subs={self.count_subscribers("/rtcm")}',
             ])
@@ -400,9 +385,13 @@ def main():
     node = GpsStatusLogger()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

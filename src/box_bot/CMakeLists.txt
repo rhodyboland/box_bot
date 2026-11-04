@@ -22,6 +22,8 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(gnss_migration test/test_gnss_migration.py)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files
@@ -39,6 +41,7 @@ install(
 
 install(
   PROGRAMS
+    scripts/gnss_navsat.py
     scripts/gps_status_logger.py
     scripts/imu_yaw_offset.py
     scripts/imu_tilt_cloud_filter.py
@@ -46,5 +49,7 @@ install(
     scripts/rtk2go_ntrip_client.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(FILES scripts/gnss_helpers.py DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

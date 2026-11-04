@@ -14,12 +14,8 @@ from rclpy.node import Node
 from rclpy.time import Time
 from sensor_msgs.msg import Imu, NavSatFix
 from tf2_ros import Buffer, TransformException, TransformListener
-from ublox_msgs.msg import NavCOV, NavPVT, NavRELPOSNED, NavSTATUS, RxmRTCM
-
-try:
-    from ublox_msgs.msg import NavRELPOSNED9
-except ImportError:
-    NavRELPOSNED9 = None
+from ublox_ubx_msgs.msg import UBXNavCov, UBXNavPVT, UBXNavRelPosNED, UBXNavStatus, UBXRxmCor
+from gnss_helpers import baseline_length, pvt_flags, relpos_flags
 
 
 FIX_TYPES = {
@@ -97,13 +93,7 @@ def _relpos_component_m(cm, hp):
 
 
 def _relpos_length_m(msg):
-    if hasattr(msg, 'rel_pos_length'):
-        return _relpos_component_m(msg.rel_pos_length, msg.rel_pos_hp_length)
-    n = _relpos_component_m(msg.rel_pos_n, msg.rel_pos_hpn)
-    e = _relpos_component_m(msg.rel_pos_e, msg.rel_pos_hpe)
-    d = _relpos_component_m(msg.rel_pos_d, msg.rel_pos_hpd)
-    return math.sqrt(n * n + e * e + d * d)
-
+    return baseline_length(msg)
 
 def _format(value, precision=6):
     if value is None:
@@ -158,8 +148,8 @@ class MotionChainLogger(Node):
         self.declare_parameter('rover_navstatus_topic', '/gps_rover/navstatus')
         self.declare_parameter('moving_base_navstatus_topic', '/gps_moving_base/navstatus')
         self.declare_parameter('rover_navcov_topic', '/gps_rover/navcov')
-        self.declare_parameter('rover_rxmrtcm_topic', '/gps_rover/rxmrtcm')
-        self.declare_parameter('moving_base_rxmrtcm_topic', '/gps_moving_base/rxmrtcm')
+        self.declare_parameter('rover_rxmcor_topic', '/gps_rover/rxmcor')
+        self.declare_parameter('moving_base_rxmcor_topic', '/gps_moving_base/rxmcor')
 
         self._latest = {}
         self._unwrapped_yaws = {}
@@ -201,7 +191,6 @@ class MotionChainLogger(Node):
         return os.path.join(log_dir, f'boxbot_motion_chain_{stamp}.csv')
 
     def _create_subscriptions(self):
-        relpos_type = NavRELPOSNED9 if NavRELPOSNED9 is not None else NavRELPOSNED
         subscriptions = [
             ('cmd_vel', Twist, 'cmd_vel_topic'),
             ('wheel_odom', Odometry, 'wheel_odom_topic'),
@@ -213,16 +202,16 @@ class MotionChainLogger(Node):
             ('imu', Imu, 'imu_topic'),
             ('gps_heading', Imu, 'gps_heading_topic'),
             ('corrected_heading', Imu, 'corrected_heading_topic'),
-            ('relpos', relpos_type, 'relposned_topic'),
+            ('relpos', UBXNavRelPosNED, 'relposned_topic'),
             ('rover_fix', NavSatFix, 'rover_fix_topic'),
             ('moving_base_fix', NavSatFix, 'moving_base_fix_topic'),
-            ('rover_pvt', NavPVT, 'rover_navpvt_topic'),
-            ('moving_base_pvt', NavPVT, 'moving_base_navpvt_topic'),
-            ('rover_status', NavSTATUS, 'rover_navstatus_topic'),
-            ('moving_base_status', NavSTATUS, 'moving_base_navstatus_topic'),
-            ('rover_cov', NavCOV, 'rover_navcov_topic'),
-            ('rover_rtcm', RxmRTCM, 'rover_rxmrtcm_topic'),
-            ('moving_base_rtcm', RxmRTCM, 'moving_base_rxmrtcm_topic'),
+            ('rover_pvt', UBXNavPVT, 'rover_navpvt_topic'),
+            ('moving_base_pvt', UBXNavPVT, 'moving_base_navpvt_topic'),
+            ('rover_status', UBXNavStatus, 'rover_navstatus_topic'),
+            ('moving_base_status', UBXNavStatus, 'moving_base_navstatus_topic'),
+            ('rover_cov', UBXNavCov, 'rover_navcov_topic'),
+            ('rover_cor', UBXRxmCor, 'rover_rxmcor_topic'),
+            ('moving_base_cor', UBXRxmCor, 'moving_base_rxmcor_topic'),
         ]
 
         for key, msg_type, parameter_name in subscriptions:
@@ -373,10 +362,11 @@ class MotionChainLogger(Node):
                 f'{prefix}_status_fix',
                 f'{prefix}_status_fix_ok',
                 f'{prefix}_status_diff',
-                f'{prefix}_rtcm_age_s',
-                f'{prefix}_rtcm_msg_type',
-                f'{prefix}_rtcm_ref_station',
-                f'{prefix}_rtcm_crc_ok',
+                f'{prefix}_cor_age_s',
+                f'{prefix}_cor_msg_type',
+                f'{prefix}_cor_ref_station',
+                f'{prefix}_cor_error_status',
+                f'{prefix}_cor_used',
             ])
 
         fields.extend([
@@ -591,18 +581,18 @@ class MotionChainLogger(Node):
         if msg is None:
             return
 
-        flags = int(msg.flags)
+        flags = relpos_flags(msg)
         heading_deg = math.fmod(float(getattr(msg, 'rel_pos_heading', 0)) * 1.0e-5, 360.0)
-        row['relpos_itow_ms'] = msg.i_tow
-        row['relpos_valid'] = bool(flags & int(msg.FLAGS_REL_POS_VALID))
-        row['relpos_heading_valid'] = bool(flags & getattr(msg, 'FLAGS_REL_POS_HEAD_VALID', 0))
-        row['relpos_diff'] = bool(flags & int(msg.FLAGS_DIFF_SOLN))
+        row['relpos_itow_ms'] = msg.itow
+        row['relpos_valid'] = bool(msg.rel_pos_valid)
+        row['relpos_heading_valid'] = bool(msg.rel_pos_heading_valid)
+        row['relpos_diff'] = bool(msg.diff_soln)
         row['relpos_carrier'] = _relpos_carrier_solution(flags)
         row['relpos_flags'] = flags
         row['relpos_ref_station_id'] = msg.ref_station_id
-        row['relpos_n_m'] = _relpos_component_m(msg.rel_pos_n, msg.rel_pos_hpn)
-        row['relpos_e_m'] = _relpos_component_m(msg.rel_pos_e, msg.rel_pos_hpe)
-        row['relpos_d_m'] = _relpos_component_m(msg.rel_pos_d, msg.rel_pos_hpd)
+        row['relpos_n_m'] = _relpos_component_m(msg.rel_pos_n, msg.rel_pos_hp_n)
+        row['relpos_e_m'] = _relpos_component_m(msg.rel_pos_e, msg.rel_pos_hp_e)
+        row['relpos_d_m'] = _relpos_component_m(msg.rel_pos_d, msg.rel_pos_hp_d)
         row['relpos_length_m'] = _relpos_length_m(msg)
         row['relpos_heading_deg'] = heading_deg
         row['relpos_heading_unwrapped_deg'] = self._unwrap_yaw_deg(
@@ -620,14 +610,14 @@ class MotionChainLogger(Node):
         )
 
     def _add_gps(self, row, now):
-        for prefix, fix_key, pvt_key, status_key, rtcm_key in (
-            ('rover', 'rover_fix', 'rover_pvt', 'rover_status', 'rover_rtcm'),
+        for prefix, fix_key, pvt_key, status_key, cor_key in (
+            ('rover', 'rover_fix', 'rover_pvt', 'rover_status', 'rover_cor'),
             (
                 'moving_base',
                 'moving_base_fix',
                 'moving_base_pvt',
                 'moving_base_status',
-                'moving_base_rtcm',
+                'moving_base_cor',
             ),
         ):
             fix, fix_stamp = self._latest_msg(fix_key)
@@ -647,18 +637,18 @@ class MotionChainLogger(Node):
             pvt, pvt_stamp = self._latest_msg(pvt_key)
             row[f'{prefix}_pvt_age_s'] = _age_seconds(now, pvt_stamp)
             if pvt is not None:
-                flags = int(pvt.flags)
-                row[f'{prefix}_pvt_itow_ms'] = pvt.i_tow
+                flags = pvt_flags(pvt)
+                row[f'{prefix}_pvt_itow_ms'] = pvt.itow
                 row[f'{prefix}_pvt_lat_deg'] = float(pvt.lat) * 1.0e-7
                 row[f'{prefix}_pvt_lon_deg'] = float(pvt.lon) * 1.0e-7
                 row[f'{prefix}_pvt_height_m'] = float(pvt.height) * 0.001
-                row[f'{prefix}_pvt_h_msl_m'] = float(pvt.h_msl) * 0.001
+                row[f'{prefix}_pvt_h_msl_m'] = float(pvt.hmsl) * 0.001
                 row[f'{prefix}_pvt_fix_type'] = FIX_TYPES.get(
-                    int(pvt.fix_type),
-                    int(pvt.fix_type),
+                    int(pvt.gps_fix.fix_type),
+                    int(pvt.gps_fix.fix_type),
                 )
                 row[f'{prefix}_pvt_carrier'] = _pvt_carrier_solution(flags)
-                row[f'{prefix}_pvt_diff'] = bool(flags & int(pvt.FLAGS_DIFF_SOLN))
+                row[f'{prefix}_pvt_diff'] = bool(pvt.diff_soln)
                 row[f'{prefix}_pvt_num_sv'] = pvt.num_sv
                 row[f'{prefix}_pvt_h_acc_m'] = float(pvt.h_acc) * 0.001
                 row[f'{prefix}_pvt_v_acc_m'] = float(pvt.v_acc) * 0.001
@@ -667,30 +657,29 @@ class MotionChainLogger(Node):
                 row[f'{prefix}_pvt_vel_d_mps'] = float(pvt.vel_d) * 0.001
                 row[f'{prefix}_pvt_g_speed_mps'] = float(pvt.g_speed) * 0.001
                 row[f'{prefix}_pvt_s_acc_mps'] = float(pvt.s_acc) * 0.001
-                row[f'{prefix}_pvt_head_mot_deg'] = float(pvt.heading) * 1.0e-5
+                row[f'{prefix}_pvt_head_mot_deg'] = float(pvt.head_mot) * 1.0e-5
                 row[f'{prefix}_pvt_head_veh_deg'] = float(pvt.head_veh) * 1.0e-5
                 row[f'{prefix}_pvt_head_acc_deg'] = float(pvt.head_acc) * 1.0e-5
 
             status, status_stamp = self._latest_msg(status_key)
             row[f'{prefix}_status_age_s'] = _age_seconds(now, status_stamp)
             if status is not None:
-                flags = int(status.flags)
-                row[f'{prefix}_status_itow_ms'] = status.i_tow
+                row[f'{prefix}_status_itow_ms'] = status.itow
                 row[f'{prefix}_status_fix'] = FIX_TYPES.get(
-                    int(status.gps_fix),
-                    int(status.gps_fix),
+                    int(status.gps_fix.fix_type),
+                    int(status.gps_fix.fix_type),
                 )
-                row[f'{prefix}_status_fix_ok'] = bool(flags & int(status.FLAGS_GPS_FIX_OK))
-                row[f'{prefix}_status_diff'] = bool(flags & int(status.FLAGS_DIFF_SOLN))
+                row[f'{prefix}_status_fix_ok'] = bool(status.gps_fix_ok)
+                row[f'{prefix}_status_diff'] = bool(status.diff_soln)
 
-            rtcm, rtcm_stamp = self._latest_msg(rtcm_key)
-            row[f'{prefix}_rtcm_age_s'] = _age_seconds(now, rtcm_stamp)
-            if rtcm is not None:
-                row[f'{prefix}_rtcm_msg_type'] = rtcm.msg_type
-                row[f'{prefix}_rtcm_ref_station'] = rtcm.ref_station
-                row[f'{prefix}_rtcm_crc_ok'] = not bool(
-                    int(rtcm.flags) & int(rtcm.FLAGS_CRC_FAILED)
-                )
+            cor, cor_stamp = self._latest_msg(cor_key)
+            row[f'{prefix}_cor_age_s'] = _age_seconds(now, cor_stamp)
+            if cor is not None:
+                row[f'{prefix}_cor_msg_type'] = cor.msg_type
+                row[f'{prefix}_cor_ref_station'] = cor.status_info.correction_id
+                # Preserve unknown/error/ok as distinct states; unknown is not success.
+                row[f'{prefix}_cor_error_status'] = cor.status_info.err_status
+                row[f'{prefix}_cor_used'] = cor.status_info.msg_used
 
     def _add_dual_gps_baselines(self, row):
         rover_fix, _ = self._latest_msg('rover_fix')
@@ -735,9 +724,9 @@ class MotionChainLogger(Node):
         if msg is None:
             return
 
-        row['rover_cov_itow_ms'] = msg.i_tow
-        row['rover_cov_pos_valid'] = bool(msg.pos_cov_valid)
-        row['rover_cov_vel_valid'] = bool(msg.vel_cov_valid)
+        row['rover_cov_itow_ms'] = msg.itow
+        row['rover_cov_pos_valid'] = bool(msg.pos_cor_valid)
+        row['rover_cov_vel_valid'] = bool(msg.vel_cor_valid)
         row['rover_cov_pos_nn'] = msg.pos_cov_nn
         row['rover_cov_pos_ee'] = msg.pos_cov_ee
         row['rover_cov_pos_dd'] = msg.pos_cov_dd

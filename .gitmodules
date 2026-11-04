@@ -7,10 +7,6 @@
 [submodule "src/serial"]
 	path = src/serial
 	url = https://github.com/RoverRobotics-forks/serial-ros2.git
-[submodule "src/ublox"]
-	path = src/ublox
-	url = git@github.com:KumarRobotics/ublox.git
-	branch = ros2
 [submodule "src/bno08x_driver"]
 	path = src/bno08x_driver
 	url = https://github.com/bnbhat/bno08x_ros2_driver.git
@@ -18,3 +14,6 @@
 	path = src/realsense-ros
 	url = https://github.com/NVIDIA-ISAAC-ROS/realsense-ros.git
 	branch = release/4.51.1-isaac
+[submodule "src/ublox_dgnss"]
+	path = src/ublox_dgnss
+	url = https://github.com/aussierobots/ublox_dgnss.git

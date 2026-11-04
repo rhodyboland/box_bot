@@ -9,17 +9,12 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    f9p_params = LaunchConfiguration('f9p_params')
+    gnss_params = LaunchConfiguration('gnss_params')
     ntrip_params = LaunchConfiguration('ntrip_params')
     ekf_params = LaunchConfiguration('ekf_params')
     nav2_params = LaunchConfiguration('nav2_params')
-    rover_device = LaunchConfiguration('rover_device')
-    moving_base_device = LaunchConfiguration('moving_base_device')
-    rover_baudrate = LaunchConfiguration('rover_baudrate')
-    moving_base_baudrate = LaunchConfiguration('moving_base_baudrate')
     navsat_fix_topic = LaunchConfiguration('navsat_fix_topic')
     ntrip_fix_topic = LaunchConfiguration('ntrip_fix_topic')
-    rover_rtcm_topic = LaunchConfiguration('rover_rtcm_topic')
     moving_base_rtcm_topic = LaunchConfiguration('moving_base_rtcm_topic')
     start_lidar = LaunchConfiguration('start_lidar')
     lidar_serial_port = LaunchConfiguration('lidar_serial_port')
@@ -99,9 +94,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            'f9p_params',
+            'gnss_params',
             default_value=PathJoinSubstitution(
-                [FindPackageShare('box_bot'), 'config', 'zed_f9p_dual.yaml']
+                [FindPackageShare('box_bot'), 'config', 'zed_x20p_dual.yaml']
             )
         ),
         DeclareLaunchArgument(
@@ -122,16 +117,8 @@ def generate_launch_description():
                 [FindPackageShare('box_bot'), 'config', 'nav2_minimal.yaml']
             )
         ),
-        DeclareLaunchArgument('rover_device', default_value='/dev/boxbot/gps_rover'),
-        DeclareLaunchArgument(
-            'moving_base_device',
-            default_value='/dev/boxbot/gps_moving_base',
-        ),
-        DeclareLaunchArgument('rover_baudrate', default_value='115200'),
-        DeclareLaunchArgument('moving_base_baudrate', default_value='115200'),
         DeclareLaunchArgument('navsat_fix_topic', default_value='/gps_rover/fix'),
         DeclareLaunchArgument('ntrip_fix_topic', default_value='/gps_moving_base/fix'),
-        DeclareLaunchArgument('rover_rtcm_topic', default_value='/rtcm_rover_disabled'),
         DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
         DeclareLaunchArgument('start_lidar', default_value='false'),
         DeclareLaunchArgument('lidar_serial_port', default_value='/dev/boxbot/lidar'),
@@ -370,64 +357,15 @@ def generate_launch_description():
             ],
         ),
 
-        Node(
-            package='ublox_gps',
-            executable='ublox_gps_node',
-            name='gps_rover',
-            output='screen',
-            parameters=[
-                f9p_params,
-                {
-                    'device': rover_device,
-                    'uart1.baudrate': ParameterValue(
-                        rover_baudrate,
-                        value_type=int
-                    ),
-                },
-            ],
-            remappings=[
-                ('fix', '/gps_rover/fix'),
-                ('fix_velocity', '/gps_rover/fix_velocity'),
-                ('navpvt', '/gps_rover/navpvt'),
-                ('navheading', '/gps/heading'),
-                ('navrelposned', '/gps/relposned'),
-                ('navstatus', '/gps_rover/navstatus'),
-                ('navcov', '/gps_rover/navcov'),
-                ('navstate', '/gps_rover/navsat'),
-                ('monhw', '/gps_rover/monhw'),
-                ('nmea', '/gps/nmea'),
-                ('rxmrtcm', '/gps_rover/rxmrtcm'),
-                ('rtcm', rover_rtcm_topic),
-            ],
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                FindPackageShare('box_bot'), 'launch', 'gnss.launch.py',
+            ])),
+            launch_arguments={
+                'gnss_params': gnss_params,
+                'moving_base_rtcm_topic': moving_base_rtcm_topic,
+            }.items(),
         ),
-        Node(
-            package='ublox_gps',
-            executable='ublox_gps_node',
-            name='gps_moving_base',
-            output='screen',
-            parameters=[
-                f9p_params,
-                {
-                    'device': moving_base_device,
-                    'uart1.baudrate': ParameterValue(
-                        moving_base_baudrate,
-                        value_type=int
-                    ),
-                },
-            ],
-            remappings=[
-                ('fix', '/gps_moving_base/fix'),
-                ('fix_velocity', '/gps_moving_base/fix_velocity'),
-                ('navpvt', '/gps_moving_base/navpvt'),
-                ('navstatus', '/gps_moving_base/navstatus'),
-                ('navstate', '/gps_moving_base/navsat'),
-                ('monhw', '/gps_moving_base/monhw'),
-                ('nmea', '/gps_moving_base/nmea'),
-                ('rxmrtcm', '/gps_moving_base/rxmrtcm'),
-                ('rtcm', moving_base_rtcm_topic),
-            ],
-        ),
-
         Node(
             package='box_bot',
             executable='gps_status_logger.py',
@@ -519,7 +457,7 @@ def generate_launch_description():
                 'relposned_timeout_seconds': 2.0,
             }],
             remappings=[
-                ('imu/in', '/gps/heading'),
+                ('imu/raw', '/gps/heading'),
                 ('imu/out', '/gps/heading_corrected'),
                 ('relposned', '/gps/relposned'),
             ],

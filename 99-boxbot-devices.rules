@@ -16,10 +16,14 @@ SUBSYSTEM=="tty", KERNEL=="ttyTHS[0-9]*", GROUP="dialout", MODE="0660"
 SUBSYSTEM=="tty", KERNEL=="ttyUSB[0-9]*", GROUP="dialout", MODE="0660"
 SUBSYSTEM=="tty", KERNEL=="ttyACM[0-9]*", GROUP="dialout", MODE="0660"
 
-# Stable names for identical u-blox ZED-F9P receivers. These units report the
-# same USB serial, so match the physical USB port path.
-SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01a9", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.2:1.0", SYMLINK+="boxbot/gps_moving_base", GROUP="dialout", MODE="0660"
-SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01a9", ENV{ID_PATH}=="platform-3610000.usb-usb-0:2.1:1.0", SYMLINK+="boxbot/gps_rover", GROUP="dialout", MODE="0660"
+# ZED-X20P main USB interfaces, identified by the configured USB serial strings.
+# Confirmed physical positions: BOXBOT_BASE is front; BOXBOT_ROVER is back.
+# Match receiver identity rather than USB port or enumeration order. Keep the
+# role aliases used by ROS and add physical-position aliases for inspection.
+# Prevent ModemManager from probing the GNSS receivers.
+SUBSYSTEM=="usb", ATTR{idVendor}=="1546", ATTR{idProduct}=="01ab", GROUP="plugdev", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01ab", ENV{ID_SERIAL_SHORT}=="BOXBOT_BASE", SYMLINK+="boxbot/gps_moving_base", SYMLINK+="boxbot/gps_front", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
+SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01ab", ENV{ID_SERIAL_SHORT}=="BOXBOT_ROVER", SYMLINK+="boxbot/gps_rover", SYMLINK+="boxbot/gps_back", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
 #
 # Stable name for the SLLIDAR C1 USB adapter.
 SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="10c4", ENV{ID_MODEL_ID}=="ea60", ENV{ID_SERIAL_SHORT}=="f8027a42ffe5ed119038daa80b2af5ab", SYMLINK+="boxbot/lidar", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"

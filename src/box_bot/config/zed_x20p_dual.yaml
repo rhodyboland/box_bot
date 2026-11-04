@@ -1,0 +1,32 @@
+# Only RAM output settings are changed. Preserve the configured navigation rate,
+# receiver roles, UART links, constellations and persistent configuration.
+/**:
+  ros__parameters:
+    DEVICE_FAMILY: X20P
+    ESF_MEAS_INPUT_ENABLED: false
+    CFG_USBOUTPROT_UBX: true
+    # BOXBOT consumes UBX over USB. RTCM stays on the wired UART link;
+    # duplicating it and NMEA on USB can exhaust the receiver transmit buffer.
+    CFG_USBOUTPROT_NMEA: false
+    CFG_USBOUTPROT_RTCM3X: false
+    CFG_MSGOUT_UBX_NAV_PVT_USB: 1
+    CFG_MSGOUT_UBX_NAV_HPPOSLLH_USB: 1
+    CFG_MSGOUT_UBX_NAV_COV_USB: 1
+    CFG_MSGOUT_UBX_NAV_STATUS_USB: 1
+    CFG_MSGOUT_UBX_NAV_SAT_USB: 20
+    # Correction status is event-driven (about 120 messages/s on the rover).
+    # Sample one in 20 to keep diagnostics from crowding navigation USB output.
+    CFG_MSGOUT_UBX_RXM_COR_USB: 20
+    CFG_MSGOUT_UBX_SEC_SIG_USB: 20
+/gps_rover/receiver:
+  ros__parameters:
+    DEVICE_SERIAL_STRING: BOXBOT_ROVER
+    FRAME_ID: gps
+    RTCM_INPUT_ENABLED: false
+    CFG_MSGOUT_UBX_NAV_RELPOSNED_USB: 1
+/gps_moving_base/receiver:
+  ros__parameters:
+    DEVICE_SERIAL_STRING: BOXBOT_BASE
+    FRAME_ID: gps_moving_base
+    RTCM_INPUT_ENABLED: true
+    CFG_USBINPROT_RTCM3X: true

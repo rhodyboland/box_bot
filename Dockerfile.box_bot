@@ -104,11 +104,9 @@ RUN git clone --depth 1 --branch ${LIBREALSENSE_SOURCE_VERSION} \
     cmake --install /tmp/librealsense/build && \
     rm -rf /tmp/librealsense
 
-# Use the source KumarRobotics ublox driver instead of the Humble apt package.
-# The source ROS 2 branch exposes RTCM input; the Humble binary package in this
-# image does not subscribe to /rtcm.
-RUN git clone --branch ros2 https://github.com/KumarRobotics/ublox.git \
-      /workspaces/isaac_ros-dev/src/box_bot/src/ublox
+# GNSS source is pinned by the src/ublox_dgnss Git submodule on the mounted
+# workspace. Initialize submodules before building; do not clone drivers into
+# the image independently of the repository revision.
 
 RUN pip3 install --upgrade Jetson.GPIO
 WORKDIR /workspaces/isaac_ros-dev

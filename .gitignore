@@ -3,6 +3,7 @@ logs/
 install/
 log/
 build/
+/.local-backups/
 bin/
 lib/
 msg_gen/

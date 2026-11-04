@@ -75,20 +75,19 @@ grant_device_tree() {
 
     [[ ${#devices[@]} -gt 0 ]] || return 0
 
-    local gid
-    gid="$(stat -c '%g' "${devices[0]}")"
-
-    local actual_group
-    actual_group="$(ensure_gid_group "${group_name}" "${gid}")"
-    usermod -aG "${actual_group}" "${USERNAME}" 2>/dev/null || true
-
-    local dev
+    # USB families can have different groups (GNSS plugdev, cameras video).
+    # Preserve each device's udev ownership rather than assigning the first
+    # device's group to every USB node. Never add the user to group root.
+    local dev gid actual_group
     for dev in "${devices[@]}"; do
-        chgrp "${actual_group}" "${dev}" 2>/dev/null || true
+        gid="$(stat -c '%g' "${dev}")"
+        [[ "${gid}" != 0 ]] || continue
+        actual_group="$(ensure_gid_group "${group_name}" "${gid}")"
+        usermod -aG "${actual_group}" "${USERNAME}" 2>/dev/null || true
         chmod "${mode}" "${dev}" 2>/dev/null || true
     done
 
-    echo "Granted ${USERNAME} ${actual_group} access to devices under ${root}"
+    echo "Granted ${USERNAME} access using device groups under ${root}"
 }
 
 for group_name in dialout gpio i2c video plugdev; do

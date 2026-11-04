@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 
 import math
+import signal
 
 import rclpy
 from rclpy.node import Node
+from rclpy.executors import ExternalShutdownException
 from rclpy.time import Time
 from sensor_msgs.msg import Imu
-from ublox_msgs.msg import NavRELPOSNED
-
-try:
-    from ublox_msgs.msg import NavRELPOSNED9
-except ImportError:
-    NavRELPOSNED9 = None
-
+from ublox_ubx_msgs.msg import UBXNavRelPosNED
+from gnss_helpers import baseline_length, heading_yaw, relpos_flags
 
 RELPOS_FLAG_GNSS_FIX_OK = 1
 RELPOS_FLAG_DIFF_SOLN = 2
@@ -130,7 +127,7 @@ class ImuYawOffset(Node):
         self._reference_imu = None
         self._reference_imu_time = None
         self._pub = self.create_publisher(Imu, 'imu/out', 10)
-        self.create_subscription(Imu, 'imu/in', self._callback, 10)
+        self._raw_pub = self.create_publisher(Imu, 'imu/raw', 10)
         if self._reference_imu_topic:
             self.create_subscription(
                 Imu,
@@ -138,9 +135,8 @@ class ImuYawOffset(Node):
                 self._reference_imu_callback,
                 10,
             )
-        relpos_msg_type = NavRELPOSNED9 if NavRELPOSNED9 is not None else NavRELPOSNED
         self.create_subscription(
-            relpos_msg_type, 'relposned', self._relpos_callback, 10)
+            UBXNavRelPosNED, 'relposned', self._relpos_callback, 10)
         self.get_logger().info(
             f'Applying GPS heading yaw offset: {self._yaw_offset:.6f} rad, '
             f'alpha={self._filter_alpha:.2f}, '
@@ -154,7 +150,7 @@ class ImuYawOffset(Node):
         self._reference_imu_time = self.get_clock().now()
 
     def _relpos_callback(self, msg):
-        flags = int(msg.flags)
+        flags = relpos_flags(msg)
         length_m = self._baseline_length(msg)
         self._relpos_flags = flags
         self._relpos_length_m = length_m
@@ -191,16 +187,25 @@ class ImuYawOffset(Node):
         else:
             self._relpos_reason = 'ok'
 
+        # Build both raw and corrected headings from this same RELPOSNED epoch.
+        # Invalid baselines must never become an orientation measurement.
+        if not self._relpos_ok:
+            return
+        imu = Imu()
+        imu.header = msg.header
+        yaw = heading_yaw(msg)
+        imu.orientation.z = math.sin(yaw / 2.0)
+        imu.orientation.w = math.cos(yaw / 2.0)
+        imu.orientation_covariance[0] = 1000.0
+        imu.orientation_covariance[4] = 1000.0
+        imu.orientation_covariance[8] = math.radians(msg.acc_heading * 1e-5) ** 2
+        imu.angular_velocity_covariance[0] = -1.0
+        imu.linear_acceleration_covariance[0] = -1.0
+        self._raw_pub.publish(imu)
+        self._callback(imu)
+
     def _baseline_length(self, msg):
-        if hasattr(msg, 'rel_pos_length'):
-            return (
-                float(msg.rel_pos_length) * 0.01
-                + float(msg.rel_pos_hp_length) * 0.0001
-            )
-        n = float(msg.rel_pos_n) * 0.01 + float(msg.rel_pos_hpn) * 0.0001
-        e = float(msg.rel_pos_e) * 0.01 + float(msg.rel_pos_hpe) * 0.0001
-        d = float(msg.rel_pos_d) * 0.01 + float(msg.rel_pos_hpd) * 0.0001
-        return math.sqrt(n * n + e * e + d * d)
+        return baseline_length(msg)
 
     def _relpos_gate_ok(self, now):
         if not self._gate_with_relposned:
@@ -381,9 +386,13 @@ def main():
     node = ImuYawOffset()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

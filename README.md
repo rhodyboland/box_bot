@@ -18,7 +18,10 @@ The ROS wrapper is kept as a submodule. Dockerfile.box_bot provides the
 pinned librealsense SDK used by this wrapper.
 
 gps:
-https://github.com/ros-drivers/nmea_navsat_driver/tree/ros2
+The launch files use the pinned `aussierobots/ublox_dgnss` submodule.
+BOXBOT now has two ZED-X20P receivers with custom USB serial names; see
+[GNSS setup and driver assessment](GNSS_SETUP.md) for the confirmed front/back
+mapping, udev rules, build instructions and validation results.
 
 mag:
 https://github.com/rhodyboland/py_qmc6310_driver
