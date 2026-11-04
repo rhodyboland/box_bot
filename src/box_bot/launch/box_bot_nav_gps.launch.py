@@ -2,7 +2,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -32,11 +32,26 @@ def generate_launch_description():
     realsense_camera_namespace = LaunchConfiguration('realsense_camera_namespace')
     realsense_camera_name = LaunchConfiguration('realsense_camera_name')
     realsense_serial_no = LaunchConfiguration('realsense_serial_no')
+    realsense_depth_enable = LaunchConfiguration('realsense_depth_enable')
+    realsense_color_enable = LaunchConfiguration('realsense_color_enable')
     realsense_depth_profile = LaunchConfiguration('realsense_depth_profile')
     realsense_color_profile = LaunchConfiguration('realsense_color_profile')
     realsense_clip_distance = LaunchConfiguration('realsense_clip_distance')
     realsense_emitter_enabled = LaunchConfiguration('realsense_emitter_enabled')
     realsense_initial_reset = LaunchConfiguration('realsense_initial_reset')
+    realsense_align_depth_enable = LaunchConfiguration('realsense_align_depth_enable')
+    realsense_sync_enable = LaunchConfiguration('realsense_sync_enable')
+    realsense_filters_enable = LaunchConfiguration('realsense_filters_enable')
+    realsense_pointcloud_enable = LaunchConfiguration('realsense_pointcloud_enable')
+    realsense_pointcloud_stream_filter = LaunchConfiguration('realsense_pointcloud_stream_filter')
+    realsense_start_delay = LaunchConfiguration('realsense_start_delay')
+    realsense_lrs_log_level = LaunchConfiguration('realsense_lrs_log_level')
+    realsense_obstacle_filter_enable = LaunchConfiguration('realsense_obstacle_filter_enable')
+    realsense_obstacle_min_height = LaunchConfiguration('realsense_obstacle_min_height')
+    realsense_obstacle_max_height = LaunchConfiguration('realsense_obstacle_max_height')
+    realsense_obstacle_ground_height = LaunchConfiguration('realsense_obstacle_ground_height')
+    realsense_obstacle_downsample_step = LaunchConfiguration('realsense_obstacle_downsample_step')
+    realsense_obstacle_max_points = LaunchConfiguration('realsense_obstacle_max_points')
     start_ntrip = LaunchConfiguration('start_ntrip')
     start_gps_status = LaunchConfiguration('start_gps_status')
     start_motion_chain_logger = LaunchConfiguration('start_motion_chain_logger')
@@ -129,12 +144,27 @@ def generate_launch_description():
         DeclareLaunchArgument('realsense_camera_namespace', default_value='camera'),
         DeclareLaunchArgument('realsense_camera_name', default_value='camera'),
         DeclareLaunchArgument('realsense_serial_no', default_value=''),
-        DeclareLaunchArgument('realsense_depth_profile', default_value='640x480x30'),
-        DeclareLaunchArgument('realsense_color_profile', default_value='640x480x30'),
+        DeclareLaunchArgument('realsense_depth_enable', default_value='true'),
+        DeclareLaunchArgument('realsense_color_enable', default_value='false'),
+        DeclareLaunchArgument('realsense_depth_profile', default_value='640x480x15'),
+        DeclareLaunchArgument('realsense_color_profile', default_value='640x480x15'),
         DeclareLaunchArgument('realsense_clip_distance', default_value='6.0'),
         # Daylight usually overwhelms the active IR projector; passive stereo is cleaner outside.
         DeclareLaunchArgument('realsense_emitter_enabled', default_value='0'),
-        DeclareLaunchArgument('realsense_initial_reset', default_value='true'),
+        DeclareLaunchArgument('realsense_initial_reset', default_value='false'),
+        DeclareLaunchArgument('realsense_align_depth_enable', default_value='false'),
+        DeclareLaunchArgument('realsense_sync_enable', default_value='false'),
+        DeclareLaunchArgument('realsense_filters_enable', default_value='false'),
+        DeclareLaunchArgument('realsense_pointcloud_enable', default_value='true'),
+        DeclareLaunchArgument('realsense_pointcloud_stream_filter', default_value='0'),
+        DeclareLaunchArgument('realsense_start_delay', default_value='12.0'),
+        DeclareLaunchArgument('realsense_lrs_log_level', default_value='ERROR'),
+        DeclareLaunchArgument('realsense_obstacle_filter_enable', default_value='true'),
+        DeclareLaunchArgument('realsense_obstacle_min_height', default_value='0.15'),
+        DeclareLaunchArgument('realsense_obstacle_max_height', default_value='1.0'),
+        DeclareLaunchArgument('realsense_obstacle_ground_height', default_value='-0.10'),
+        DeclareLaunchArgument('realsense_obstacle_downsample_step', default_value='6'),
+        DeclareLaunchArgument('realsense_obstacle_max_points', default_value='16000'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
         DeclareLaunchArgument('start_gps_status', default_value='true'),
         DeclareLaunchArgument('start_motion_chain_logger', default_value='false'),
@@ -190,55 +220,133 @@ def generate_launch_description():
                 'scan_mode': lidar_scan_mode,
             }.items(),
         ),
-        Node(
-            package='realsense2_camera',
-            executable='realsense2_camera_node',
-            namespace=realsense_camera_namespace,
-            name=realsense_camera_name,
-            output='screen',
+        TimerAction(
+            period=realsense_start_delay,
             condition=IfCondition(start_realsense),
+            actions=[
+                Node(
+                    package='realsense2_camera',
+                    executable='realsense2_camera_node',
+                    namespace=realsense_camera_namespace,
+                    name=realsense_camera_name,
+                    output='screen',
+                    additional_env={
+                        'LRS_LOG_LEVEL': realsense_lrs_log_level,
+                    },
+                    parameters=[{
+                        'camera_name': ParameterValue(
+                            realsense_camera_name,
+                            value_type=str
+                        ),
+                        'serial_no': ParameterValue(
+                            realsense_serial_no,
+                            value_type=str
+                        ),
+                        'enable_depth': ParameterValue(
+                            realsense_depth_enable,
+                            value_type=bool
+                        ),
+                        'enable_color': ParameterValue(
+                            realsense_color_enable,
+                            value_type=bool
+                        ),
+                        'enable_infra1': False,
+                        'enable_infra2': False,
+                        'enable_gyro': False,
+                        'enable_accel': False,
+                        'publish_tf': False,
+                        'tf_publish_rate': 0.0,
+                        'depth_module.profile': ParameterValue(
+                            realsense_depth_profile,
+                            value_type=str
+                        ),
+                        'rgb_camera.profile': ParameterValue(
+                            realsense_color_profile,
+                            value_type=str
+                        ),
+                        'depth_module.emitter_enabled': ParameterValue(
+                            realsense_emitter_enabled,
+                            value_type=int
+                        ),
+                        'clip_distance': ParameterValue(
+                            realsense_clip_distance,
+                            value_type=float
+                        ),
+                        'initial_reset': ParameterValue(
+                            realsense_initial_reset,
+                            value_type=bool
+                        ),
+                        'pointcloud.enable': ParameterValue(
+                            realsense_pointcloud_enable,
+                            value_type=bool
+                        ),
+                        'pointcloud.stream_filter': ParameterValue(
+                            realsense_pointcloud_stream_filter,
+                            value_type=int
+                        ),
+                        'pointcloud.allow_no_texture_points': True,
+                        'pointcloud.ordered_pc': False,
+                        'pointcloud.pointcloud_qos': 'SENSOR_DATA',
+                        'allow_no_texture_points': True,
+                        'align_depth.enable': ParameterValue(
+                            realsense_align_depth_enable,
+                            value_type=bool
+                        ),
+                        'enable_sync': ParameterValue(
+                            realsense_sync_enable,
+                            value_type=bool
+                        ),
+                        'spatial_filter.enable': ParameterValue(
+                            realsense_filters_enable,
+                            value_type=bool
+                        ),
+                        'temporal_filter.enable': ParameterValue(
+                            realsense_filters_enable,
+                            value_type=bool
+                        ),
+                        'decimation_filter.enable': ParameterValue(
+                            realsense_filters_enable,
+                            value_type=bool
+                        ),
+                    }],
+                    arguments=['--ros-args', '--log-level', log_level],
+                ),
+            ],
+        ),
+        Node(
+            package='box_bot',
+            executable='imu_tilt_cloud_filter.py',
+            name='imu_tilt_cloud_filter',
+            output='screen',
+            condition=IfCondition(PythonExpression([
+                "'", start_realsense, "'.lower() == 'true' and '",
+                realsense_obstacle_filter_enable, "'.lower() == 'true'",
+            ])),
             parameters=[{
-                'camera_name': ParameterValue(
-                    realsense_camera_name,
-                    value_type=str
+                'input_cloud_topic': '/camera/depth/color/points',
+                'output_cloud_topic': '/camera/depth/obstacles',
+                'imu_topic': '/imu/data',
+                'target_frame': 'base_link',
+                'ground_height': ParameterValue(
+                    realsense_obstacle_ground_height,
+                    value_type=float,
                 ),
-                'serial_no': ParameterValue(realsense_serial_no, value_type=str),
-                'enable_depth': True,
-                'enable_color': True,
-                'enable_infra1': False,
-                'enable_infra2': False,
-                'enable_gyro': False,
-                'enable_accel': False,
-                'depth_module.profile': ParameterValue(
-                    realsense_depth_profile,
-                    value_type=str
+                'min_obstacle_height': ParameterValue(
+                    realsense_obstacle_min_height,
+                    value_type=float,
                 ),
-                'rgb_camera.profile': ParameterValue(
-                    realsense_color_profile,
-                    value_type=str
+                'max_obstacle_height': ParameterValue(
+                    realsense_obstacle_max_height,
+                    value_type=float,
                 ),
-                'depth_module.emitter_enabled': ParameterValue(
-                    realsense_emitter_enabled,
-                    value_type=int
+                'downsample_step': ParameterValue(
+                    realsense_obstacle_downsample_step,
+                    value_type=int,
                 ),
-                'clip_distance': ParameterValue(
-                    realsense_clip_distance,
-                    value_type=float
+                'max_points': ParameterValue(
+                    realsense_obstacle_max_points,
+                    value_type=int,
                 ),
-                'initial_reset': ParameterValue(
-                    realsense_initial_reset,
-                    value_type=bool
-                ),
-                'pointcloud.enable': True,
-                'pointcloud.allow_no_texture_points': True,
-                'pointcloud.ordered_pc': False,
-                'pointcloud.pointcloud_qos': 'SENSOR_DATA',
-                'allow_no_texture_points': True,
-                'align_depth.enable': True,
-                'enable_sync': True,
-                'spatial_filter.enable': True,
-                'temporal_filter.enable': True,
-                'decimation_filter.enable': True,
             }],
             arguments=['--ros-args', '--log-level', log_level],
         ),
@@ -285,6 +393,8 @@ def generate_launch_description():
                 ('navrelposned', '/gps/relposned'),
                 ('navstatus', '/gps_rover/navstatus'),
                 ('navcov', '/gps_rover/navcov'),
+                ('navstate', '/gps_rover/navsat'),
+                ('monhw', '/gps_rover/monhw'),
                 ('nmea', '/gps/nmea'),
                 ('rxmrtcm', '/gps_rover/rxmrtcm'),
                 ('rtcm', rover_rtcm_topic),
@@ -310,6 +420,8 @@ def generate_launch_description():
                 ('fix_velocity', '/gps_moving_base/fix_velocity'),
                 ('navpvt', '/gps_moving_base/navpvt'),
                 ('navstatus', '/gps_moving_base/navstatus'),
+                ('navstate', '/gps_moving_base/navsat'),
+                ('monhw', '/gps_moving_base/monhw'),
                 ('nmea', '/gps_moving_base/nmea'),
                 ('rxmrtcm', '/gps_moving_base/rxmrtcm'),
                 ('rtcm', moving_base_rtcm_topic),
@@ -433,7 +545,7 @@ def generate_launch_description():
             remappings=[
                 ('gps/fix', navsat_fix_topic),
                 ('imu', '/gps/heading_corrected'),
-                ('odometry/filtered', '/odometry/global'),
+                ('odometry/filtered', '/odometry/local'),
                 ('odometry/gps', '/odometry/gps'),
             ],
         ),

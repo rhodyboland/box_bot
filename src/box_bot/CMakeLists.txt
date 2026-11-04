@@ -41,6 +41,7 @@ install(
   PROGRAMS
     scripts/gps_status_logger.py
     scripts/imu_yaw_offset.py
+    scripts/imu_tilt_cloud_filter.py
     scripts/motion_chain_logger.py
     scripts/rtk2go_ntrip_client.py
   DESTINATION lib/${PROJECT_NAME}
