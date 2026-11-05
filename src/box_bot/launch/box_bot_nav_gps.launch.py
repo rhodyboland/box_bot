@@ -17,6 +17,8 @@ def generate_launch_description():
     ntrip_fix_topic = LaunchConfiguration('ntrip_fix_topic')
     moving_base_rtcm_topic = LaunchConfiguration('moving_base_rtcm_topic')
     start_lidar = LaunchConfiguration('start_lidar')
+    start_hub = LaunchConfiguration('start_hub')
+    hub_serial_port = LaunchConfiguration('hub_serial_port')
     lidar_serial_port = LaunchConfiguration('lidar_serial_port')
     lidar_serial_baudrate = LaunchConfiguration('lidar_serial_baudrate')
     lidar_frame_id = LaunchConfiguration('lidar_frame_id')
@@ -121,6 +123,10 @@ def generate_launch_description():
         DeclareLaunchArgument('ntrip_fix_topic', default_value='/gps_moving_base/fix'),
         DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
         DeclareLaunchArgument('start_lidar', default_value='false'),
+        DeclareLaunchArgument('start_hub', default_value='true'),
+        DeclareLaunchArgument(
+            'hub_serial_port',
+            default_value='/dev/boxbot/hub'),
         DeclareLaunchArgument('lidar_serial_port', default_value='/dev/boxbot/lidar'),
         DeclareLaunchArgument('lidar_serial_baudrate', default_value='460800'),
         DeclareLaunchArgument('lidar_frame_id', default_value='laser'),
@@ -177,6 +183,11 @@ def generate_launch_description():
         DeclareLaunchArgument('autostart', default_value='true'),
         DeclareLaunchArgument('log_level', default_value='info'),
 
+        Node(
+            package='box_bot', executable='esp32_hub.py', name='esp32_hub',
+            output='screen', condition=IfCondition(start_hub),
+            parameters=[{'port': ParameterValue(hub_serial_port, value_type=str)}],
+        ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution([

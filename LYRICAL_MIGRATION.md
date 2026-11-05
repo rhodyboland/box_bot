@@ -305,3 +305,29 @@ the live 12-second monitoring run passed. The existing global filter has
 consumed stale GPS measurements; a user-controlled clean localization restart
 and movement comparison remain necessary. The separate impossible wheel
 velocity spikes in the motion CSV are still unresolved.
+
+### ESP32 hub in default GPS bringup
+
+The saved Hub v1 protocol was verified against the connected ESP32 USB stream.
+Added a read-only, nonblocking receiver to box_bot_nav_gps.launch.py, enabled
+by default with start_hub=true. hub_serial_port defaults to /dev/boxbot/hub;
+the udev rule matches bridge VID/PID 1a86:55d3 and serial 5CBC399477. The rule
+is installed on the host. The existing container retained an old, empty
+/dev/boxbot bind mount; use the new alias with the next container as requested.
+The installer now keeps that directory nonempty to avoid udev removing it when
+its last device alias disappears.
+
+Publishes sensor_msgs/BatteryState on /battery/state and diagnostic_msgs on
+/diagnostics, including MOS/probe temperatures, framing errors, sequence gaps
+and five-second hub/BMS watchdogs. CRC and schema checks precede publication;
+duplicate/out-of-order packets are discarded. No hub/BMS commands are sent,
+and stale data is not republished. Unknown chemistry, health and capacity are
+not inferred. The node reconnects after serial failures.
+
+The box_bot package build passed. Eight hub tests cover stream recovery,
+schema limits, a pseudo-terminal-to-BatteryState path, duplicate suppression,
+watchdog expiry and reboot handling; these and the nine GNSS tests passed.
+A temporary isolated-domain live receive check confirmed three battery samples
+(39.81 V, -0.08 A, 92%, twelve cells, 29 C) and OK hub/BMS diagnostics using
+the exact bridge identity. That check stopped; no persistent hub node was
+added to the running stack. Default bringup activation is for the next run.

@@ -21,6 +21,8 @@ HOST_USER="${SUDO_USER:-${USER}}"
 sudo usermod -aG dialout,gpio,i2c,video,plugdev "${HOST_USER}"
 
 sudo mkdir -p /dev/boxbot
+# Keep the bind-mounted directory alive when udev removes its last device link.
+sudo touch /dev/boxbot/.keep
 sudo cp "${RULES_SRC}" "${RULES_DST}"
 sudo udevadm control --reload-rules
 sudo udevadm trigger

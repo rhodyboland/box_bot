@@ -40,6 +40,23 @@ not shadow the CLI's patched camera driver, and uses separate Lyrical outputs.
 Use the wrapper for builds; plain `colcon build` will discover the old camera.
 The rosdep wrapper also excludes that source tree from dependency discovery.
 
+`box_bot_nav_gps.launch.py` enables the ESP32 battery hub by default. It receives
+CRC-checked Hub v1 telemetry from `/dev/boxbot/hub` at 115200 baud. Install the
+repository's udev rules to create this alias for USB serial `5CBC399477`.
+Override with `hub_serial_port:=...`, or disable with `start_hub:=false`.
+`/battery/state` (`sensor_msgs/msg/BatteryState`, sensor-data QoS) contains pack
+voltage, signed current (negative means discharging), charge fraction, cell
+voltages and the higher battery probe temperature. MOS and both probe
+temperatures, packet errors and freshness appear under `boxbot_hub/*` on
+`/diagnostics`. Missing/stale telemetry produces ERROR diagnostics after five
+seconds; cached battery samples are not republished as fresh. Unknown capacity,
+chemistry, charging status and health are left unknown. The node only reads
+USB; it sends no hub/BMS commands and reconnects if USB is unplugged.
+
+```bash
+ros2 topic echo /battery/state --qos-reliability best_effort
+```
+
 Velocity commands now use `geometry_msgs/msg/TwistStamped` on `/cmd_vel`:
 
 ```bash

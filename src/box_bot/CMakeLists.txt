@@ -24,6 +24,7 @@ find_package(ament_cmake REQUIRED)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(gnss_migration test/test_gnss_migration.py)
+  ament_add_pytest_test(hub test/test_hub.py)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files
@@ -41,6 +42,7 @@ install(
 
 install(
   PROGRAMS
+    scripts/esp32_hub.py
     scripts/gnss_navsat.py
     scripts/gps_status_logger.py
     scripts/imu_yaw_offset.py
@@ -50,6 +52,6 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(FILES scripts/gnss_helpers.py DESTINATION lib/${PROJECT_NAME})
+install(FILES scripts/gnss_helpers.py scripts/hub_protocol.py DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

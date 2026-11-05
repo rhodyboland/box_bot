@@ -25,6 +25,10 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="1546", ATTR{idProduct}=="01ab", GROUP="plugde
 SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01ab", ENV{ID_SERIAL_SHORT}=="BOXBOT_BASE", SYMLINK+="boxbot/gps_moving_base", SYMLINK+="boxbot/gps_front", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
 SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1546", ENV{ID_MODEL_ID}=="01ab", ENV{ID_SERIAL_SHORT}=="BOXBOT_ROVER", SYMLINK+="boxbot/gps_rover", SYMLINK+="boxbot/gps_back", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
 #
+# ESP32 hub USB bridge. The shared /dev/boxbot directory is visible in Isaac
+# containers even when /dev/serial/by-id is not mounted.
+SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="55d3", ENV{ID_SERIAL_SHORT}=="5CBC399477", SYMLINK+="boxbot/hub", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
+
 # Stable name for the SLLIDAR C1 USB adapter.
 SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="10c4", ENV{ID_MODEL_ID}=="ea60", ENV{ID_SERIAL_SHORT}=="f8027a42ffe5ed119038daa80b2af5ab", SYMLINK+="boxbot/lidar", GROUP="dialout", MODE="0660", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_CANDIDATE}="0"
 
