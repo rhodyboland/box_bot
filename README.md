@@ -46,8 +46,8 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true
 ```
 
 Do not run robot bringup or teleop until GPIO/pinmux and device identities are
-validated and hardware operation is authorized. The old overlay differs from the
-one previously installed; see the migration assessment before installing it.
+validated and hardware operation is authorized. See the migration assessment for the read-only overlay checks and remaining
+physical validation before installing it.
 
 # packages:
 

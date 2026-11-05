@@ -105,7 +105,7 @@ COLCON_DEFAULTS_FILE="${ISAAC_ROS_WS}/src/box_bot/colcon.defaults.yaml" \
   --return-code-on-test-failure \
   --ctest-args -R 'gnss_migration|test_lyrical_interface|test_i2c_mock|test_watchdog' \
   --output-on-failure
-colcon test-result --test-result-base build-lyrical --verbose
+colcon --log-base log-lyrical test-result --test-result-base build-lyrical --verbose
 python3 src/box_bot/scripts/check_nav2_configuration.py
 python3 src/box_bot/scripts/check_nav2_configuration.py --composition
 python3 src/box_bot/scripts/check_nav2_configuration.py \
@@ -121,11 +121,18 @@ sensor rates, obstacle response, command timeout, or navigation behavior.
 1. Finish the camera/Boxbot image build and verify package discovery, dependencies,
    and shared-library loading in that image. The source checks so far used the
    base container with development dependencies installed temporarily.
-2. Verify the R39 pinmux/GPIO overlay before installing anything. The workspace
-   `CONTEXT.md` records that the old installed overlay had pin 7 tristate 1 and
-   Schmitt 1, while this project's source has tristate 0 and no Schmitt property.
-3. Recheck UART, I2C bus 7, device groups, USB port identities, `/dev/boxbot`
-   aliases, and container visibility on the fresh installation.
+2. Verify physical pinmux/GPIO behavior before installing or enabling anything.
+   The initial context note about differing overlays was stale: the current DTS
+   and DTBO both have pin 7 tristate 1 and Schmitt 1, matching the reported old
+   installed values. The checked-in DTBO also applied successfully to a temporary
+   copy of the running R39 device tree using `fdtoverlay`; no live tree or boot
+   configuration was changed. This validates the target symbols, not electrical
+   behavior.
+3. Recheck device groups, identities, `/dev/boxbot` aliases, and container
+   visibility when the sensors are connected. The read-only check found
+   `/dev/ttyTHS1`, `/dev/ttyTHS2`, and `/dev/i2c-7`, but no GNSS, lidar, or RealSense
+   USB devices and no `/dev/boxbot` aliases. The rules already match programmed
+   GNSS serial names `BOXBOT_BASE` / `BOXBOT_ROVER`, rather than USB port order.
 4. Check D455 firmware against NVIDIA's documented 5.16.0.1 requirement. No camera
    firmware was read or flashed during this work.
 5. With explicit hardware authorization, test wheel feedback and stale-command
