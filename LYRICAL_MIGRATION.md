@@ -75,8 +75,9 @@ lists are replaced. The workspace image-layer list is therefore complete.
   installed CLI. Existing Boxbot mount/group scripts are retained pending actual
   device validation; they are not made obsolete by their historical filenames.
 
-No host device rules, overlays, GPIO settings, or existing containers were
-restarted or reconfigured by this port.
+The software port did not alter host device settings or restart containers.
+Subsequent header preparation staged the GPIO overlay for the next boot using
+Jetson-IO; see [40-pin header setup](HEADER_SETUP.md). No live GPIO was driven.
 
 ## Validation completed
 
@@ -142,7 +143,8 @@ lint warning is nonfatal; the CLI supplies that argument.
    unresolved. A fresh development shell can use
    `isaac-ros activate -c docker.run.container_name=boxbot_lyrical`
    to avoid attaching to the older base container.
-2. Verify physical pinmux/GPIO behavior before installing or enabling anything.
+2. The GPIO overlay is now staged for the next boot; see [header setup](HEADER_SETUP.md).
+   Verify physical pinmux/GPIO behavior after installation in the robot.
    The initial context note about differing overlays was stale: the current DTS
    and DTBO both have pin 7 tristate 1 and Schmitt 1, matching the reported old
    installed values. The checked-in DTBO also applied successfully to a temporary

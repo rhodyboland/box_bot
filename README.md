@@ -7,7 +7,8 @@ git clone --recurse-submodules git@github.com:rhodyboland/box_bot.git -b orin_na
 
 Work is on `orin_nano_lyrical`. The hoverboard and lidar forks use
 `codex/lyrical` branches. Build and simulated tests precede hardware validation.
-See [migration status and assessment](LYRICAL_MIGRATION.md).
+See [migration status and assessment](LYRICAL_MIGRATION.md) and
+[40-pin header setup / next-boot configuration](HEADER_SETUP.md).
 
 Configure and build the environment on the Jetson host:
 
