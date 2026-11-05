@@ -197,3 +197,20 @@ about 1–2 seconds near shutdown; real-time FIFO scheduling was unavailable.
 GNSS shutdown included an abort/forced kill and the camera needed SIGTERM.
 The D455 reported firmware 5.13.0.50, below the documented 5.16.0.1 pin; no
 firmware was changed. USB 2 operation remains intentional.
+
+## Stationary map-filter divergence
+
+A stationary capture found local odometry effectively constant and GPS odometry
+varying by roughly a centimetre, while global odometry exceeded 300 km offset
+and reported speeds above 1500 m/s. GPS odometry carried frame_id=odom, but the
+map EKF fuses it in map. The navsat_transform odometry input incorrectly used
+/odometry/local, allowing the map filter's own map-to-odom transform to feed back
+into GPS position conversion. It now uses /odometry/global so GPS output uses
+the map world frame. This change requires restarting localization to clear its
+corrupted state; live stability remains to be verified.
+
+The same capture did not receive wheel odometry or joint states, and local
+position covariance was very large. Wheel-odometry delivery still needs checking.
+No physical movement commands or live-node restarts were performed during this
+diagnosis. Both teleop and Nav2's smoother were publishing /cmd_vel; use only
+base bringup for the next indoor teleop test.

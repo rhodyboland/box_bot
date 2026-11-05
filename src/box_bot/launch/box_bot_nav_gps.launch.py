@@ -482,7 +482,8 @@ def generate_launch_description():
             remappings=[
                 ('gps/fix', navsat_fix_topic),
                 ('imu', '/gps/heading_corrected'),
-                ('odometry/filtered', '/odometry/local'),
+                # GPS positions must be expressed in the map EKF's frame.
+                ('odometry/filtered', '/odometry/global'),
                 ('odometry/gps', '/odometry/gps'),
             ],
         ),
