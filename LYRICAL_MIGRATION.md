@@ -176,3 +176,24 @@ The inactive tests above did none of those things.
 - [Lyrical differential-drive controller](https://control.ros.org/lyrical/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html)
 - [Nav2 Kilted to Lyrical migration](https://docs.nav2.org/rolling/configuration_and_development/migration_guides/kilted/Kilted/)
 - [NITROS migration](https://nvidia-isaac-ros.github.io/concepts/rosidl_buffer/nitros_migration.html)
+
+## First full bringup log review
+
+The physical drive controller failed initialization because the controller spawner
+was not given its parameter file: wheel_separation fell back to its invalid zero
+default. The launch now passes --param-file to the spawners and forwards the
+velocity remap through --controller-ros-args. A separate-domain GenericSystem
+check loaded/configured the controller inactive with separation 0.36, radius 0.1,
+and a TwistStamped subscription on /cmd_vel. No real hardware was activated by
+that check. The hoverboard package was rebuilt.
+
+Other observed bringup results: both GNSS receivers fetched 120 parameters each;
+BNO085 started with configured IMU/magnetic rates of 100/50 Hz; Nav2 activated
+and loaded the GPS behavior tree; D455 opened a 640x480 Z16 depth stream at 15 FPS.
+GNSS configuration success does not prove a position or RTK fix indoors.
+
+Remaining findings: the physical controller loop showed serial-read stalls of
+about 1–2 seconds near shutdown; real-time FIFO scheduling was unavailable.
+GNSS shutdown included an abort/forced kill and the camera needed SIGTERM.
+The D455 reported firmware 5.13.0.50, below the documented 5.16.0.1 pin; no
+firmware was changed. USB 2 operation remains intentional.
