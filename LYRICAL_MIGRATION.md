@@ -1,8 +1,8 @@
 # Boxbot Lyrical port
 
 Status: 5 November 2026. The software port builds and passes the hardware-free
-checks below. The SDK and patched camera layer built. The final Boxbot layer initially failed
-because pip was absent; that dependency is fixed and the cached rebuild is running. Physical robot
+checks below. The final CLI image built successfully after fixing the missing pip dependency.
+A temporary read-only container passed package, ROS-message, and SDK-library checks. Physical robot
 operation has not been tested or authorized.
 
 ## Branches and baseline
@@ -132,9 +132,16 @@ lint warning is nonfatal; the CLI supplies that argument.
 
 ## Remaining validation
 
-1. Finish the camera/Boxbot image build and verify package discovery, dependencies,
-   and shared-library loading in that image. The source checks so far used the
-   base container with development dependencies installed temporarily.
+1. The final image is built: `isaac_ros-realsense-box_bot_d1df40f9a9b44b7e900d7a8c9ce9f931-arm64-jetpack`
+   in the `nvcr.io/nvidia/isaac/ros` repository. A temporary container with no
+   network, GPU, device mounts, or workspace mounts resolved RealSense from
+   `/opt/ros/lyrical`, imported ROS messages, loaded `librealsense2.so`, and
+   confirmed Jetson.GPIO 2.1.13. Installed versions: RealSense wrapper 4.56.3,
+   hardware_interface 6.9.0, navigation2 1.5.0. The 25 workspace tests were run
+   previously in the development container; upstream camera test timeouts remain
+   unresolved. A fresh development shell can use
+   `isaac-ros activate -c docker.run.container_name=boxbot_lyrical`
+   to avoid attaching to the older base container.
 2. Verify physical pinmux/GPIO behavior before installing or enabling anything.
    The initial context note about differing overlays was stale: the current DTS
    and DTBO both have pin 7 tristate 1 and Schmitt 1, matching the reported old
