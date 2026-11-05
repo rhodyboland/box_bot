@@ -228,3 +228,25 @@ the longer timeout also increases the time before a lost bond is reported.
 This is a mitigation requiring live startup verification, not a confirmed fix.
 The user confirmed the robot is outdoors; GNSS quality should be assessed from
 receiver data rather than inferred from an indoor setting.
+
+## Heading/alignment capture
+
+With the robot roughly east-facing, corrected GNSS yaw was -16.86 degrees and
+global EKF yaw -17.21 degrees. Raw baseline yaw was 163.14 degrees, consistent
+with the existing 180-degree antenna offset. The independent BNO absolute yaw
+is not fused as global heading and should not be calibrated from this snapshot.
+TF attribution confirmed a single publisher for map->odom and odom->base_footprint;
+the controller's enable_odom_tf is false. Both EKFs updated near 20 Hz with fresh
+timestamps during the stationary capture; wheel odometry was also received.
+
+The map->UTM transform had a 34.27-degree yaw despite the global filter directly
+fusing earth-referenced yaw. This is a suspected source of sideways map motion,
+not yet verified through a controlled movement comparison. navsat_transform now
+uses use_odometry_yaw=true with its /odometry/global input, providing position
+and earth-referenced heading from the same global filter sample. The absolute
+GNSS heading input has differential=false and relative=false, satisfying the
+robot_localization requirement for this mode. No yaw offsets or wheel calibration
+were changed. A clean localization restart and straight-line check are required
+to verify alignment and the reported movement lag. Running nodes were not changed.
+
+Reference: https://github.com/cra-ros-pkg/robot_localization/blob/rolling-devel/doc/navsat_transform_node.rst

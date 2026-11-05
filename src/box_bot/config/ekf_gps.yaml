@@ -49,7 +49,10 @@ navsat_transform:
     yaw_offset: 0.0
     zero_altitude: true
 
-    use_odometry_yaw: false
+    # The input is /odometry/global, whose yaw fuses absolute GNSS heading.
+    # Use that same pose/yaw sample to avoid a fixed map/UTM rotation caused
+    # by independently initialized raw-heading and filtered-heading inputs.
+    use_odometry_yaw: true
     broadcast_cartesian_transform: true
     publish_filtered_gps: false
 
