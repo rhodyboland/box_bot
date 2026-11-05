@@ -47,6 +47,7 @@ def generate_launch_description():
         'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool),
         'autostart': ParameterValue(LaunchConfiguration('autostart'), value_type=bool),
         'node_names': [server[1] for server in servers],
+        'bond_timeout': ParameterValue(LaunchConfiguration('bond_timeout'), value_type=float),
     }
     nodes = [Node(
         package=package, executable=name, name=name,
@@ -72,6 +73,8 @@ def generate_launch_description():
         DeclareLaunchArgument('namespace', default_value=''),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),
+        DeclareLaunchArgument('bond_timeout', default_value='10.0',
+                              description='Nav2 lifecycle bond timeout in seconds'),
         DeclareLaunchArgument('use_composition', default_value='false'),
         DeclareLaunchArgument('container_name', default_value='nav2_container'),
         DeclareLaunchArgument('use_respawn', default_value='false'),

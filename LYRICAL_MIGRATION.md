@@ -214,3 +214,17 @@ position covariance was very large. Wheel-odometry delivery still needs checking
 No physical movement commands or live-node restarts were performed during this
 diagnosis. Both teleop and Nav2's smoother were publishing /cmd_vel; use only
 base bringup for the next indoor teleop test.
+
+## Intermittent inactive navigation action server
+
+The next outdoor run configured all seven Nav2 servers but the lifecycle manager
+aborted during controller_server activation after its default 4-second bond
+timeout. The navigator therefore remained inactive and rejected goals. The
+preceding run had established every bond and activated all seven servers.
+This suggests intermittent startup/discovery timing; the underlying cause has
+not yet been established. The launch now exposes bond_timeout, default 10 seconds,
+for both standalone and composed bringup. Bond monitoring remains enabled, but
+the longer timeout also increases the time before a lost bond is reported.
+This is a mitigation requiring live startup verification, not a confirmed fix.
+The user confirmed the robot is outdoors; GNSS quality should be assessed from
+receiver data rather than inferred from an indoor setting.
