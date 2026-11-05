@@ -1,23 +1,15 @@
+"""Use the same installed-path Nav2 bringup for the minimal configuration."""
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
+
 
 def generate_launch_description():
-    return LaunchDescription([
-        Node(package='nav2_controller', executable='controller_server',
-             output='screen', parameters=['config/nav2_minimal.yaml']),
-        Node(package='nav2_planner', executable='planner_server',
-             output='screen', parameters=['config/nav2_minimal.yaml']),
-        Node(package='nav2_smoother', executable='smoother_server',
-             output='screen', parameters=['config/nav2_minimal.yaml']),
-        Node(package='nav2_bt_navigator', executable='bt_navigator',
-             output='screen', parameters=['config/nav2_minimal.yaml']),
-        Node(package='nav2_waypoint_follower', executable='waypoint_follower',
-             output='screen', parameters=['config/nav2_minimal.yaml']),
-        Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
-             name='lifecycle_manager_navigation', output='screen',
-             parameters=[{'use_sim_time': False},
-                         {'autostart': True},
-                         {'node_names': ['controller_server','planner_server',
-                                         'smoother_server','bt_navigator',
-                                         'waypoint_follower']}]),
-    ])
+    return LaunchDescription([IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([
+            FindPackageShare('nav2_launcher'), 'launch', 'nav2_launch.py'])),
+        launch_arguments={'params_file': PathJoinSubstitution([
+            FindPackageShare('nav2_launcher'), 'config', 'nav2_params.yaml'])}.items(),
+    )])

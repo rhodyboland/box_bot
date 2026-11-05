@@ -1,0 +1,14 @@
+# The CLI RealSense layer owns the patched camera packages.
+# Exclude the inherited wrapper so it cannot shadow the underlay.
+list:
+  packages-ignore: [realsense2_camera, realsense2_camera_msgs, realsense2_description]
+build:
+  packages-ignore: [realsense2_camera, realsense2_camera_msgs, realsense2_description]
+  build-base: build-lyrical
+  install-base: install-lyrical
+  symlink-install: true
+  parallel-workers: 2
+test:
+  packages-ignore: [realsense2_camera, realsense2_camera_msgs, realsense2_description]
+  build-base: build-lyrical
+  install-base: install-lyrical

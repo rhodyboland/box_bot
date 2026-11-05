@@ -1,0 +1,3 @@
+# Boxbot's Jetson baseline, verified during the JetPack 7.2.1 installation.
+# Reuse NVIDIA's released image rather than rebuild the full base toolchain.
+FROM nvcr.io/nvidia/isaac/ros:isaac_ros_1742a70509cba44cb1943ab200bbece1-arm64-jetpack@sha256:4b8dd4ed835c06a191775d0fef9d9dc9ac942d37a7cf5c042c9bd206afed877e

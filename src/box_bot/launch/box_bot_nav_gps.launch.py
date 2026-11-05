@@ -243,11 +243,11 @@ def generate_launch_description():
                         'enable_accel': False,
                         'publish_tf': False,
                         'tf_publish_rate': 0.0,
-                        'depth_module.profile': ParameterValue(
+                        'depth_module.depth_profile': ParameterValue(
                             realsense_depth_profile,
                             value_type=str
                         ),
-                        'rgb_camera.profile': ParameterValue(
+                        'rgb_camera.color_profile': ParameterValue(
                             realsense_color_profile,
                             value_type=str
                         ),
@@ -274,7 +274,6 @@ def generate_launch_description():
                         'pointcloud.allow_no_texture_points': True,
                         'pointcloud.ordered_pc': False,
                         'pointcloud.pointcloud_qos': 'SENSOR_DATA',
-                        'allow_no_texture_points': True,
                         'align_depth.enable': ParameterValue(
                             realsense_align_depth_enable,
                             value_type=bool

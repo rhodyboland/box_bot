@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 import rclpy
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import PoseStamped, TwistStamped
 from nav_msgs.msg import Odometry, Path
 from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException
@@ -192,7 +192,7 @@ class MotionChainLogger(Node):
 
     def _create_subscriptions(self):
         subscriptions = [
-            ('cmd_vel', Twist, 'cmd_vel_topic'),
+            ('cmd_vel', TwistStamped, 'cmd_vel_topic'),
             ('wheel_odom', Odometry, 'wheel_odom_topic'),
             ('local_odom', Odometry, 'local_odom_topic'),
             ('global_odom', Odometry, 'global_odom_topic'),
@@ -459,8 +459,8 @@ class MotionChainLogger(Node):
         row['cmd_age_s'] = _age_seconds(now, stamp)
         if msg is None:
             return
-        row['cmd_vx_mps'] = msg.linear.x
-        row['cmd_wz_radps'] = msg.angular.z
+        row['cmd_vx_mps'] = msg.twist.linear.x
+        row['cmd_wz_radps'] = msg.twist.angular.z
 
     def _add_odometry(self, row, now):
         for key in ('wheel_odom', 'local_odom', 'global_odom', 'gps_odom'):

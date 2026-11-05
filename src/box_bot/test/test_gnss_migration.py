@@ -1,5 +1,6 @@
 """Exercise X20P field scaling, validity gates, and diagnostic consumers in ROS."""
 import math
+import struct
 from pathlib import Path
 import sys
 import tempfile
@@ -9,7 +10,12 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 
 import rclpy
+from geometry_msgs.msg import TwistStamped
 from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import Header
+from rclpy.serialization import deserialize_message, serialize_message
+from sensor_msgs.msg import PointCloud2
+from imu_tilt_cloud_filter import ImuTiltCloudFilter
 from ublox_ubx_msgs.msg import (
     UBXNavCov, UBXNavHPPosLLH, UBXNavPVT, UBXNavRelPosNED, UBXNavSat,
     UBXNavStatus, UBXRxmCor, UBXSecSig, SatInfo,
@@ -51,6 +57,37 @@ class TestGnssMigration(unittest.TestCase):
         hp.height, hp.height_hp = 23456, -5
         hp.h_acc, hp.v_acc = 100, 200
         return pvt, hp
+
+    def test_lyrical_pointcloud_buffer_roundtrip(self):
+        node = ImuTiltCloudFilter()
+        try:
+            cloud = node._create_xyz_cloud(Header(frame_id='camera'), [(1.0, 0.0, 0.3)])
+            decoded = deserialize_message(serialize_message(cloud), PointCloud2)
+            self.assertEqual(decoded.header.frame_id, 'base_link')
+            self.assertEqual(decoded.row_step, 12)
+            x, y, z = struct.unpack_from('<fff', decoded.data)
+            self.assertAlmostEqual(x, 1.0)
+            self.assertAlmostEqual(y, 0.0)
+            self.assertAlmostEqual(z, 0.3)
+        finally:
+            node.destroy_node()
+
+    def test_stamped_velocity_logging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(MotionChainLogger, '_output_path', return_value=str(Path(directory) / 'motion.csv')):
+                node = MotionChainLogger()
+            try:
+                command = TwistStamped()
+                command.header.stamp = node.get_clock().now().to_msg()
+                command.twist.linear.x = 0.25
+                command.twist.angular.z = -0.3
+                with patch.object(node, '_latest_msg', return_value=(command, node.get_clock().now())):
+                    row = {}
+                    node._add_cmd(row, node.get_clock().now())
+                self.assertEqual(row['cmd_vx_mps'], 0.25)
+                self.assertEqual(row['cmd_wz_radps'], -0.3)
+            finally:
+                node.destroy_node()
 
     def test_high_precision_and_accuracy_units(self):
         pvt, hp = self.messages()

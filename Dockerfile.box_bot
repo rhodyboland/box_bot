@@ -1,119 +1,37 @@
+# Layer after isaac_ros.realsense, selected by the Isaac ROS CLI.
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-SHELL ["/bin/bash", "-c"]
-
-ARG LIBREALSENSE_SOURCE_VERSION=v2.55.1
-
-# Fix apt repo metadata/key issues inherited from base image
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg \
-      | gpg --dearmor -o /etc/apt/keyrings/yarn.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian stable main" \
-      > /etc/apt/sources.list.d/yarn.list && \
-    apt-get update --allow-releaseinfo-change
-
-# ROS 2 key/source
-RUN apt-get install -y --no-install-recommends curl gnupg lsb-release && \
-    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
-      -o /etc/apt/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
-      > /etc/apt/sources.list.d/ros2.list
-
-RUN apt-get update --allow-releaseinfo-change && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      cmake \
-      git \
-      libeigen3-dev \
-      libi2c-dev \
-      libgl1-mesa-dev \
-      libglfw3-dev \
-      libglu1-mesa-dev \
-      libgtk-3-dev \
-      libssl-dev \
-      libudev-dev \
-      libusb-1.0-0-dev \
-      gpsd-clients \
-      pkg-config \
-      rtklib \
-      python3-dev \
-      ros-humble-teleop-twist-joy \
-      ros-humble-teleop-twist-keyboard \
-      ros-humble-hardware-interface \
-      ros-humble-pluginlib \
-      ros-humble-rclcpp \
-      ros-humble-rclcpp-components \
-      ros-humble-rclcpp-lifecycle \
-      ros-humble-ros2-controllers-test-nodes \
-      ros-humble-controller-manager \
-      ros-humble-joint-state-broadcaster \
-      ros-humble-diff-drive-controller \
-      ros-humble-ros2controlcli \
-      ros-humble-robot-state-publisher \
-      ros-humble-launch \
-      ros-humble-launch-ros \
-      ros-humble-xacro \
-      i2c-tools \
-      ros-humble-sensor-msgs \
-      ros-humble-cv-bridge \
-      ros-humble-image-transport \
-      ros-humble-nmea-navsat-driver \
-      ros-humble-imu-tools \
-      ros-humble-std-srvs \
-      ros-humble-slam-toolbox \
-      ros-humble-nav2-bringup \
-      ros-humble-navigation2 \
-      python3-serial \
-      ros-humble-robot-localization \
-      ros-humble-diagnostic-updater \
-      ros-humble-rosidl-default-generators \
-      ros-humble-usb-cam \
-      ros-humble-rqt \
-      ros-humble-ros2-controllers \
-      ros-humble-tf2 \
-      ros-humble-ntrip-client && \
+# ROS and NVIDIA apt sources, CUDA, and RealSense are owned by the CLI layers.
+RUN : "${ROS_DISTRO:?The Isaac ROS base must define ROS_DISTRO}" && \
+    test "${ROS_DISTRO}" = lyrical && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      libboost-system-dev libboost-thread-dev libcurl4-openssl-dev libi2c-dev libusb-1.0-0-dev \
+      i2c-tools gpsd-clients rtklib python3-serial python3-pytest \
+      ros-${ROS_DISTRO}-hardware-interface \
+      ros-${ROS_DISTRO}-controller-manager \
+      ros-${ROS_DISTRO}-ros2controlcli \
+      ros-${ROS_DISTRO}-diff-drive-controller \
+      ros-${ROS_DISTRO}-joint-state-broadcaster \
+      ros-${ROS_DISTRO}-robot-state-publisher \
+      ros-${ROS_DISTRO}-xacro \
+      ros-${ROS_DISTRO}-teleop-twist-joy \
+      ros-${ROS_DISTRO}-teleop-twist-keyboard \
+      ros-${ROS_DISTRO}-robot-localization \
+      ros-${ROS_DISTRO}-nav2-bringup \
+      ros-${ROS_DISTRO}-navigation2 \
+      ros-${ROS_DISTRO}-slam-toolbox \
+      ros-${ROS_DISTRO}-imu-tools \
+      ros-${ROS_DISTRO}-ntrip-client \
+      ros-${ROS_DISTRO}-rtcm-msgs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Isaac ROS 3.2 pins RealSense to librealsense v2.55.1. The ROS wrapper
-# lives in this workspace as a submodule so colcon can build it with Box Bot.
-RUN git clone --depth 1 --branch ${LIBREALSENSE_SOURCE_VERSION} \
-      https://github.com/IntelRealSense/librealsense.git /tmp/librealsense && \
-    if [[ -x /usr/local/cuda/bin/nvcc ]]; then \
-      export CUDACXX=/usr/local/cuda/bin/nvcc && \
-      cmake -S /tmp/librealsense -B /tmp/librealsense/build \
-        -DBUILD_EXAMPLES=false \
-        -DBUILD_GRAPHICAL_EXAMPLES=false \
-        -DFORCE_RSUSB_BACKEND=true \
-        -DBUILD_WITH_CUDA=true \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_PYTHON_BINDINGS=bool:true; \
-    else \
-      cmake -S /tmp/librealsense -B /tmp/librealsense/build \
-        -DBUILD_EXAMPLES=false \
-        -DBUILD_GRAPHICAL_EXAMPLES=false \
-        -DFORCE_RSUSB_BACKEND=true \
-        -DBUILD_WITH_CUDA=false \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_PYTHON_BINDINGS=bool:true; \
-    fi && \
-    cmake --build /tmp/librealsense/build --parallel "$(nproc)" || \
-      cmake --build /tmp/librealsense/build && \
-    cmake --install /tmp/librealsense/build && \
-    rm -rf /tmp/librealsense
-
-# GNSS source is pinned by the src/ublox_dgnss Git submodule on the mounted
-# workspace. Initialize submodules before building; do not clone drivers into
-# the image independently of the repository revision.
-
-RUN pip3 install --upgrade Jetson.GPIO
-WORKDIR /workspaces/isaac_ros-dev
-
-RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-
-EXPOSE 8080
-EXPOSE 11311
+# Install outside system site-packages on Noble (PEP 668).
+ARG JETSON_GPIO_VERSION=2.1.13
+RUN python3 -m pip install --no-cache-dir --no-deps \
+      --target /opt/boxbot-python Jetson.GPIO==${JETSON_GPIO_VERSION}
+ENV PYTHONPATH=/opt/boxbot-python:${PYTHONPATH}
 
 COPY 10_add_gpio_groups.sh /usr/local/bin/scripts/entrypoint_additions/
+WORKDIR /workspaces/isaac_ros-dev

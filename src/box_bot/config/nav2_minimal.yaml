@@ -17,12 +17,13 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
-    error_code_names:
-      - compute_path_error_code
-      - follow_path_error_code
+    error_code_name_prefixes:
+      - compute_path
+      - follow_path
 
 controller_server:
   ros__parameters:
+    enable_stamped_cmd_vel: true
     use_sim_time: false
     odom_topic: /odometry/local
     controller_frequency: 10.0
@@ -30,9 +31,13 @@ controller_server:
     min_y_velocity_threshold: 0.0
     min_theta_velocity_threshold: 0.0001
     failure_tolerance: 2.0
-    progress_checker_plugin: "progress_checker"
+    progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["general_goal_checker"]
     controller_plugins: ["FollowPath"]
+    path_handler_plugins: ["PathHandler"]
+    PathHandler:
+      plugin: "nav2_controller::FeasiblePathHandler"
+      prune_distance: 3.0
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.25
@@ -65,11 +70,6 @@ controller_server:
       sim_time: 2.5
       linear_granularity: 0.05
       angular_granularity: 0.025
-      transform_tolerance: 1.0
-      xy_goal_tolerance: 0.25
-      trans_stopped_velocity: 0.03
-      prune_distance: 3.0
-      stateful: True
       short_circuit_trajectory_evaluation: True
       critics: ["Oscillation","BaseObstacle","ObstacleFootprint","PathDist","GoalDist"]
       BaseObstacle.scale: 0.35
@@ -84,7 +84,7 @@ planner_server:
     expected_planner_frequency: 10.0
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
+      plugin: "nav2_navfn_planner::NavfnPlanner"
       tolerance: 0.5           # a little slack at the goal
       use_astar: true
       allow_unknown: true
@@ -102,24 +102,28 @@ smoother_server:
 
 behavior_server:
   ros__parameters:
+    enable_stamped_cmd_vel: true
     use_sim_time: false
-    costmap_topic: local_costmap/costmap_raw
-    global_footprint_topic: local_costmap/published_footprint
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
     cycle_frequency: 10.0
     # The stock Nav2 recovery BT expects these action servers to exist. Keep
     # their velocities capped low for GPS-only bringup.
     behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
     spin:
-      plugin: "nav2_behaviors/Spin"
+      plugin: "nav2_behaviors::Spin"
     backup:
-      plugin: "nav2_behaviors/BackUp"
+      plugin: "nav2_behaviors::BackUp"
     drive_on_heading:
-      plugin: "nav2_behaviors/DriveOnHeading"
+      plugin: "nav2_behaviors::DriveOnHeading"
     wait:
-      plugin: "nav2_behaviors/Wait"
+      plugin: "nav2_behaviors::Wait"
     assisted_teleop:
-      plugin: "nav2_behaviors/AssistedTeleop"
-    global_frame: odom
+      plugin: "nav2_behaviors::AssistedTeleop"
+    local_frame: odom
+    global_frame: map
     robot_base_frame: base_footprint
     transform_tolerance: 1.0
     simulate_ahead_time: 2.0
@@ -153,6 +157,7 @@ global_costmap:
 local_costmap:
   local_costmap:
     ros__parameters:
+      transform_tolerance: 1.0
       use_sim_time: False
       update_frequency: 10.0
       publish_frequency: 5.0
@@ -219,6 +224,7 @@ waypoint_follower:
 
 velocity_smoother:
   ros__parameters:
+    enable_stamped_cmd_vel: true
     use_sim_time: false
     smoothing_frequency: 20.0
     scale_velocities: false

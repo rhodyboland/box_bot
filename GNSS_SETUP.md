@@ -1,3 +1,8 @@
+> Lyrical branch: use the CLI environment/build instructions in [README.md](README.md)
+> and [LYRICAL_MIGRATION.md](LYRICAL_MIGRATION.md). The Humble/Isaac ROS 3.2
+> container commands below are historical. Device and GPIO setup must be checked
+> against the fresh JetPack 7.2.1 installation before use.
+
 # BOXBOT GNSS
 
 BOXBOT uses the pinned [aussierobots/ublox_dgnss](https://github.com/aussierobots/ublox_dgnss)

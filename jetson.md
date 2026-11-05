@@ -1,3 +1,8 @@
+> Lyrical branch: use the CLI environment/build instructions in [README.md](README.md)
+> and [LYRICAL_MIGRATION.md](LYRICAL_MIGRATION.md). The Humble/Isaac ROS 3.2
+> container commands below are historical. Device and GPIO setup must be checked
+> against the fresh JetPack 7.2.1 installation before use.
+
 # Jetson Specific Setups
 
 ***The Jetson can be very tedious about setting up certain parts so I made this little guide mainly for myself.***
