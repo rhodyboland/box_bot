@@ -29,9 +29,11 @@ RUN : "${ROS_DISTRO:?The Isaac ROS base must define ROS_DISTRO}" && \
 
 # Install outside system site-packages on Noble (PEP 668).
 ARG JETSON_GPIO_VERSION=2.1.13
-RUN python3 -m pip install --no-cache-dir --no-deps \
-      --target /opt/boxbot-python Jetson.GPIO==${JETSON_GPIO_VERSION}
-ENV PYTHONPATH=/opt/boxbot-python:${PYTHONPATH}
+RUN apt-get update && apt-get install -y --no-install-recommends python3-pip && \
+    python3 -m pip install --no-cache-dir --no-deps \
+      --target /opt/boxbot-python Jetson.GPIO==${JETSON_GPIO_VERSION} && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV PYTHONPATH=/opt/boxbot-python
 
 COPY 10_add_gpio_groups.sh /usr/local/bin/scripts/entrypoint_additions/
 WORKDIR /workspaces/isaac_ros-dev

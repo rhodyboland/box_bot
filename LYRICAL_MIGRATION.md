@@ -1,7 +1,8 @@
 # Boxbot Lyrical port
 
 Status: 5 November 2026. The software port builds and passes the hardware-free
-checks below. Camera image construction is still in progress. Physical robot
+checks below. The SDK and patched camera layer built. The final Boxbot layer initially failed
+because pip was absent; that dependency is fixed and the cached rebuild is running. Physical robot
 operation has not been tested or authorized.
 
 ## Branches and baseline
@@ -115,6 +116,19 @@ python3 src/box_bot/scripts/check_nav2_configuration.py \
 The navigation script configures but never activates its processes, uses domain
 138 by default, and cleans them up afterward. It does not validate physical TF,
 sensor rates, obstacle response, command timeout, or navigation behavior.
+
+## Camera image build findings
+
+The NVIDIA SDK build recovered from its initial Python-discovery failure and
+produced the CUDA-enabled library and Python bindings. The patched ROS wrapper
+was packaged into the RealSense image, but eight upstream integration/rosbag
+CTest cases timed out. Their cause is not established; camera validation remains
+open. These are separate from the 25 passing workspace tests.
+
+The final Boxbot layer then failed with `No module named pip`. Its Dockerfile now
+installs `python3-pip` explicitly before installing Jetson.GPIO. The undefined
+PYTHONPATH warning is also corrected. The required `BASE_IMAGE` build-argument
+lint warning is nonfatal; the CLI supplies that argument.
 
 ## Remaining validation
 
