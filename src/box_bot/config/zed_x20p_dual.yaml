@@ -1,9 +1,12 @@
-# Only RAM output settings are changed. Preserve the configured navigation rate,
-# receiver roles, UART links, constellations and persistent configuration.
+# RAM-only settings. Preserve receiver roles, UART links, constellations and
+# persistent configuration. At 20 Hz the rover USB TX queue filled to 99%,
+# delaying navigation measurements by ~4.6 s; 10 Hz lets that queue drain.
 /**:
   ros__parameters:
     DEVICE_FAMILY: X20P
     ESF_MEAS_INPUT_ENABLED: false
+    CFG_RATE_MEAS: 100  # milliseconds: 10 Hz measurements
+    CFG_RATE_NAV: 1     # navigation solution every measurement
     CFG_USBOUTPROT_UBX: true
     # BOXBOT consumes UBX over USB. RTCM stays on the wired UART link;
     # duplicating it and NMEA on USB can exhaust the receiver transmit buffer.
@@ -13,6 +16,7 @@
     CFG_MSGOUT_UBX_NAV_HPPOSLLH_USB: 1
     CFG_MSGOUT_UBX_NAV_COV_USB: 1
     CFG_MSGOUT_UBX_NAV_STATUS_USB: 1
+    CFG_MSGOUT_UBX_MON_COMMS_USB: 1  # expose port buffer usage/backlog
     CFG_MSGOUT_UBX_NAV_SAT_USB: 20
     # Correction status is event-driven (about 120 messages/s on the rover).
     # Sample one in 20 to keep diagnostics from crowding navigation USB output.

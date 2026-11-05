@@ -250,3 +250,58 @@ were changed. A clean localization restart and straight-line check are required
 to verify alignment and the reported movement lag. Running nodes were not changed.
 
 Reference: https://github.com/cra-ros-pkg/robot_localization/blob/rolling-devel/doc/navsat_transform_node.rst
+
+### Confirmed rover USB backlog and 10 Hz trial
+
+During the movement capture, corrected GNSS heading tracked IMU turns with a
+4.5–4.6 second delay (correlation 0.995). A subsequent live UTC NAV-PVT check
+measured rover epoch age 4.595 s versus moving base 0.024 s, despite ROS header
+ages of 0.005 s and 0.003 s. The receiver driver stamps messages at USB receipt,
+so ROS header freshness did not expose the receiver backlog.
+
+MON-COMMS then confirmed the rover USB port (0x0300) at 99% TX usage with
+32,190 bytes pending, peak 100%, and 76 skipped messages. The moving base USB
+had no pending bytes. Both receivers had CFG_RATE_MEAS=50 and CFG_RATE_NAV=1
+(20 Hz). This locates the accumulated delay in the receiver's USB transmit
+queue; it does not yet distinguish receiver USB behaviour from the driver's
+effective read capacity. The driver services USB events on a 10 ms timer and
+requeues individual IN transfers, a possible throughput limit to investigate
+if 20 Hz is needed. Jetson's current kernel has no usbmon module.
+
+With user authorization, both running receivers were changed in RAM to
+CFG_RATE_MEAS=100, CFG_RATE_NAV=1 (10 Hz), and MON-COMMS output enabled.
+After the existing queue drained, the rover reported zero USB pending bytes,
+1–2% TX usage, and measurement ages around 40–70 ms. A further 12-second watch
+showed both receivers at roughly 66 ms age at the reporting instants and no
+increase in skipped counters. Peak usage and skipped totals retain history;
+they do not reset when the backlog clears. The YAML now reapplies these RAM
+settings on subsequent launches. No flash/BBR settings were written.
+
+The explicit receiver writes are all in src/box_bot/config/zed_x20p_dual.yaml:
+
+- Both: measurement interval 100 ms and navigation ratio 1; UBX USB output
+  enabled; NMEA and RTCM USB output disabled.
+- Both: NAV-PVT, HPPOSLLH, COV, STATUS and MON-COMMS USB output rate 1;
+  NAV-SAT, RXM-COR and SEC-SIG USB output rate 20. These are message-specific
+  output divisors, not a declaration that each stream runs at 20 Hz.
+- Rover: RELPOSNED USB output rate 1; host RTCM subscription disabled.
+- Moving base: USB RTCM input enabled and host RTCM subscription enabled.
+- Device family, serial selection, frame ID and ESF subscription control are
+  host node settings. The X20P TOML selects 131 CFG parameter definitions to
+  query/manage; it is not 131 forced receiver setting overrides. Device values
+  fetched at startup are distinguished from explicit user overrides in code.
+
+Read-only watch from the sourced Isaac workspace:
+
+```bash
+python3 /workspaces/isaac_ros-dev/src/box_bot/scripts/watch_gnss_latency.py
+```
+
+The watch compares NAV-PVT UTC acquisition time with host UTC, requiring a
+reasonably synchronized host clock. It also displays header age, last receive
+age and MON-COMMS age so cached values cannot appear fresh. It does not write
+receiver settings. Source syntax, YAML parsing, diff whitespace checks and
+the live 12-second monitoring run passed. The existing global filter has
+consumed stale GPS measurements; a user-controlled clean localization restart
+and movement comparison remain necessary. The separate impossible wheel
+velocity spikes in the motion CSV are still unresolved.
