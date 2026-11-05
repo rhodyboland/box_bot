@@ -52,3 +52,16 @@ To roll back, select `primary` at the boot menu, or restore the saved
 `extlinux.conf` and reboot. Keep the backup available.
 
 Reference: [NVIDIA R39.2 expansion-header configuration](https://docs.nvidia.com/jetson/archives/r39.2/DeveloperGuide/HR/ConfiguringTheJetsonExpansionHeaders.html).
+
+## First powered telemetry check — 5 November 2026
+
+After installation in the robot, a 15-second read-only capture from
+`/dev/ttyTHS1` at 115200 baud received 1,489 checksum-valid hoverboard packets
+(about 100 Hz), with zero checksum failures. Both reported wheel speeds were
+zero; encoder counts stayed at right=8990 and left=8997. This confirms the
+controller-to-Jetson UART path. UART transmission and GPIO switching have not
+been exercised; no motor commands were sent.
+
+The user confirmed the D455 intentionally operates over USB 2 because of an
+unresolved USB 3 interference issue with the old GPS units. Preserve that
+arrangement rather than treating the 480 Mb/s connection as an accidental fault.

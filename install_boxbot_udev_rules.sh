@@ -30,7 +30,7 @@ sed -i '\|^-v /run/udev:/run/udev:ro$|d' "${DOCKERARGS_FILE}"
 add_docker_arg() {
     local arg="$1"
 
-    if ! grep -Fxq "${arg}" "${DOCKERARGS_FILE}"; then
+    if ! grep -Fxq -- "${arg}" "${DOCKERARGS_FILE}"; then
         printf '\n%s\n' "${arg}" >> "${DOCKERARGS_FILE}"
     fi
 }
