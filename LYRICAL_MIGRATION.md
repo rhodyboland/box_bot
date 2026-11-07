@@ -399,3 +399,20 @@ navigation goals were activated by that test. Restart normal bringup to apply
 the changed plugin sets and discard the old voxel map.
 
 Reference: https://docs.nav2.org/rolling/configuration_and_development/configuration_guide/core_servers/costmap_2d/costmap_plugins/obstacle/
+
+### Controller serial deadlines (7 November)
+
+An intermittent startup log reported control-loop overruns in both write and
+update phases. The controller also reported inability to enable FIFO scheduling.
+SerialPortService previously performed blocking synchronous Boost serial I/O,
+and its configured timeout argument was unused. It now uses bounded nonblocking
+descriptor reads/writes. Empty reads return promptly. Failed/partial writes
+retain the existing hardware-error handling. A complete feedback packet must
+arrive within the configured timeout (1000 ms in the robot description), or
+the driver attempts a zero command and reports a hardware error.
+
+The hardware package rebuilt and its serial/controller regression suite passed,
+including missing-data timing, transmit backpressure, and stop/error on feedback
+timeout. These tests use pseudo-terminals. Under-load timing on the physical
+robot still needs validation. Real-time scheduling/container changes are pending
+approval and are not part of this driver change.
