@@ -57,6 +57,20 @@ USB; it sends no hub/BMS commands and reconnects if USB is unplugged.
 ros2 topic echo /battery/state --qos-reliability best_effort
 ```
 
+GPS bringup uses a quiet terminal by default: INFO/DEBUG messages and the
+repeated hoverboard `Velocity command timed out. Braking.` warning are hidden
+on screen. Other warnings, errors and unstructured output such as tracebacks
+remain visible. Full process stdout/stderr (including the hidden messages)
+is written to the run's `launch.log`; node logger levels are unchanged.
+Use `console_verbose:=true` to show everything in the terminal again.
+Inside the container, follow the complete current log with:
+
+```bash
+tail -f ~/.ros/log/latest/launch.log
+```
+
+If `ROS_LOG_DIR` is configured, look under that directory instead.
+
 Velocity commands now use `geometry_msgs/msg/TwistStamped` on `/cmd_vel`:
 
 ```bash

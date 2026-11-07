@@ -1,5 +1,10 @@
+import logging
+import os
+import re
+
+import launch.logging
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, TimerAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
@@ -8,7 +13,40 @@ from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
+class QuietConsole(logging.Filter):
+    """Filter the shared screen handler only; file handlers retain every record."""
+    def filter(self, record):
+        message = re.sub(r'\x1b\[[0-9;]*m', '', record.getMessage())
+        if ('[hoverboard_base_controller]' in message and
+                'Velocity command timed out. Braking.' in message and
+                '[WARN]' in message):
+            return False
+        if re.search(r'\[(WARN|WARNING|ERROR|FATAL)\]', message):
+            return True
+        if re.search(r'\[(INFO|DEBUG)\]', message):
+            return False
+        if record.name.endswith(('-stdout', '-stderr')):
+            return True  # Preserve unstructured output, including tracebacks.
+        return record.levelno >= logging.WARNING
+
+
+def configure_console(context):
+    handler = launch.logging.launch_config.get_screen_handler()
+    # Avoid accumulating filters if the description is included more than once.
+    for existing in list(handler.filters):
+        if isinstance(existing, QuietConsole):
+            handler.removeFilter(existing)
+    verbose = LaunchConfiguration('console_verbose').perform(context).lower()
+    if verbose not in ('true', 'false', '1', '0'):
+        raise ValueError('console_verbose must be true or false')
+    if verbose in ('false', '0'):
+        handler.addFilter(QuietConsole())
+
+
 def generate_launch_description():
+    # ExecuteProcess reads this at construction, including in nested launches.
+    # Keep stdout/stderr in launch.log even for nodes configured as screen-only.
+    os.environ['OVERRIDE_LAUNCH_PROCESS_OUTPUT'] = 'both'
     gnss_params = LaunchConfiguration('gnss_params')
     ntrip_params = LaunchConfiguration('ntrip_params')
     ekf_params = LaunchConfiguration('ekf_params')
@@ -95,6 +133,10 @@ def generate_launch_description():
     }
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'console_verbose', default_value='false',
+            description='Show all terminal output; complete process output is always logged.'),
+        OpaqueFunction(function=configure_console),
         DeclareLaunchArgument(
             'gnss_params',
             default_value=PathJoinSubstitution(
