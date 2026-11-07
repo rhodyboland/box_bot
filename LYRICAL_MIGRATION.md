@@ -331,3 +331,20 @@ A temporary isolated-domain live receive check confirmed three battery samples
 (39.81 V, -0.08 A, 92%, twelve cells, 29 C) and OK hub/BMS diagnostics using
 the exact bridge identity. That check stopped; no persistent hub node was
 added to the running stack. Default bringup activation is for the next run.
+
+### RealSense obstacle topic and revised bracket (7 November)
+
+Live inspection found fresh 640x480 depth images and a 198,852-point cloud on
+/camera/camera/depth/color/points. The obstacle filter and costmap subscribed
+to /camera/depth/color/points, which had no publisher; no filtered obstacle
+clouds arrived. The camera node now remaps its private ~/depth/color/points
+to that stable input topic, restoring both filtering and costmap ray clearing
+on the next bringup. Hardware-free ROS topic-resolution validation passed.
+
+The user replaced the bracket: same X, 16 cm above the wheel axis and 5 degrees
+down. Updated camera_joint to xyz=(0.42, 0, 0.16), rpy=(0, 5*pi/180, 0).
+Expanded xacro validation confirmed base_link is at the axle and positive pitch
+rotates the forward axis downward. Both hoverboard_control and box_bot built.
+Running navigation/camera/TF publishers were not restarted; restart bringup to
+apply the camera remap and mount transform together. Filtered points remain on
+/camera/depth/obstacles for RViz and the local costmap.

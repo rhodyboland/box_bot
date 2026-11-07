@@ -270,6 +270,9 @@ def generate_launch_description():
                     namespace=realsense_camera_namespace,
                     name=realsense_camera_name,
                     output='screen',
+                    # The wrapper publishes this private topic under both its
+                    # namespace and node name. Keep the Nav2/filter input stable.
+                    remappings=[('~/depth/color/points', '/camera/depth/color/points')],
                     additional_env={
                         'LRS_LOG_LEVEL': realsense_lrs_log_level,
                     },
