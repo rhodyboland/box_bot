@@ -373,3 +373,29 @@ ground at all three ranges. The regression and nine existing GNSS tests passed.
 The box_bot build passed. Running nodes were not restarted; launch again to
 load the new filter code and calibrated defaults. Terrain/obstacle checks while
 moving remain necessary after this stationary calibration.
+
+### Obstacle clearing and planner visibility (7 November)
+
+During the reported turning/smearing, raw depth age was 67 ms median/88 ms max
+and filtered cloud age 112 ms median/148 ms max. The camera temporal filter was
+off. Live parameters confirmed the local map used VoxelLayer with zero
+observation_persistence, while the global map contained only InflationLayer.
+The active GPS BT contains no Spin recovery; observed turn commands therefore
+came from the local controller while the planner could not see the obstruction.
+
+Changed the local layer to ObstacleLayer. The upstream filter already performs
+height/ground rejection; 2D raw-depth ray clearing can clear an old marked cell
+without requiring a ray through its particular elevated voxel. Added the same
+marking/clearing sources to the global map so Navfn can plan a detour. Both maps
+now use robot_radius=0.4; global updates/publishes at 2 Hz. Source buffering
+remains zero. These layers clear from observed free space; they do not impose
+a timed expiry on obstacles outside the camera's current view.
+
+Hardware-free configuration audits passed. An isolated-domain planner test
+using the actual updated YAML marked a synthetic wall (occupancy 99), planned
+a 1.611 m lateral detour, then cleared its former cells to occupancy 0 using
+ground rays and produced a straight plan. No robot controllers, sensors or
+navigation goals were activated by that test. Restart normal bringup to apply
+the changed plugin sets and discard the old voxel map.
+
+Reference: https://docs.nav2.org/rolling/configuration_and_development/configuration_guide/core_servers/costmap_2d/costmap_plugins/obstacle/
