@@ -27,6 +27,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(hub test/test_hub.py)
   ament_add_pytest_test(console_logging test/test_console_logging.py)
   ament_add_pytest_test(ground_filter test/test_ground_filter.py)
+  ament_add_pytest_test(boxbot_ui test/test_boxbot_ui.py TIMEOUT 60)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files
@@ -38,12 +39,13 @@ if(BUILD_TESTING)
 endif()
 #config
 install(
-  DIRECTORY config launch behavior_trees rviz
+  DIRECTORY config launch behavior_trees rviz web
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(
   PROGRAMS
+    scripts/boxbot_ui.py
     scripts/esp32_hub.py
     scripts/gnss_navsat.py
     scripts/gps_status_logger.py
@@ -54,6 +56,6 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(FILES scripts/gnss_helpers.py scripts/hub_protocol.py DESTINATION lib/${PROJECT_NAME})
+install(FILES scripts/gnss_helpers.py scripts/hub_protocol.py scripts/ui_http.py DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

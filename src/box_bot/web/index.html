@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111719">
+  <title>BOXBOT UI</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/vendor/leaflet.css">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/vendor/leaflet.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="BOXBOT UI home"><span class="brand-icon">B</span><span>BOXBOT <b>UI</b><small>ROBOT OPERATIONS</small></span></a>
+    <div class="connection"><span id="connection-dot" class="dot stale"></span><span id="connection-text">CONNECTING</span><span id="clock">--:--:--</span></div>
+    <button id="cancel" class="danger" disabled>■ &nbsp;Cancel goal</button>
+  </header>
+  <main>
+    <section class="map-area" aria-label="Navigation map">
+      <div id="map"></div>
+      <div class="map-toolbar"><button id="follow" class="active">◎ &nbsp;Follow robot</button><button id="pick">＋ &nbsp;Set target</button><button id="fit">↗ &nbsp;Show path</button></div>
+      <div id="map-notice" class="map-notice">Waiting for localization and GPS map alignment…</div>
+      <div class="map-legend"><span><i class="robot-key"></i> Robot</span><span><i class="path-key"></i> Planned path</span><span><i class="obstacle-key"></i> Obstacles</span><label><input type="checkbox" id="show-obstacles" checked> Show costmap</label></div>
+      <div class="pose-strip"><div><small>POSITION</small><strong id="position">—</strong></div><div><small>HEADING</small><strong id="bearing">—</strong></div><div><small>SPEED</small><strong id="speed">—</strong></div><div><small>MAP FRAME</small><strong>map / WGS84</strong></div></div>
+    </section>
+    <aside>
+      <section class="panel mission-panel">
+        <div class="section-title"><h2>Navigation</h2><span id="nav-badge" class="badge">IDLE</span></div>
+        <p id="mission-state" class="mission-state">Waiting for ROS</p>
+        <div class="mission-metrics"><span><small>DISTANCE LEFT</small><strong id="distance">—</strong></span><span><small>ESTIMATED TIME</small><strong id="eta">—</strong></span></div>
+        <div id="target-editor" class="target-editor" hidden>
+          <div class="target-coordinates"><small>TARGET POSITION</small><span id="target-position">—</span></div>
+          <label for="heading">Final heading <span>0° north · 90° east</span></label>
+          <div class="heading-controls"><input id="heading" type="range" min="0" max="359" value="90"><input id="heading-number" type="number" min="0" max="359" value="90" aria-label="Final compass heading in degrees"><span>°</span></div>
+          <button id="send" class="primary" disabled>Send target pose ↗</button>
+          <p class="hint">Drag the pin to adjust position. Choose a heading, then send.</p>
+        </div>
+        <button id="choose-target" class="secondary">Choose a target on the map</button>
+      </section>
+      <section class="panel battery-panel">
+        <div class="section-title"><h2>Battery</h2><span id="battery-badge" class="badge">WAITING</span></div>
+        <div class="battery-main"><strong id="battery-percent">—<span>%</span></strong><span id="battery-direction">Awaiting BMS</span></div>
+        <div class="battery-track"><div id="battery-fill"></div></div>
+        <div class="battery-metrics"><span><small>PACK VOLTAGE</small><strong id="voltage">—</strong></span><span><small>CURRENT</small><strong id="current">—</strong></span><span><small>TEMPERATURE</small><strong id="temperature">—</strong></span></div>
+        <div id="cell-voltages" class="cell-voltages" aria-label="Individual cell voltages"></div>
+      </section>
+      <section class="panel systems-panel">
+        <div class="section-title"><h2>Robot systems</h2><span id="systems-count" class="subtle">0 online</span></div>
+        <div id="systems"></div>
+      </section>
+      <section class="panel events-panel"><div class="section-title"><h2>Activity</h2><span id="system-load" class="subtle">—</span></div><ol id="events"><li>Connecting to Boxbot…</li></ol></section>
+      <footer>BOXBOT UI <span>LIVE ROS TELEMETRY</span></footer>
+    </aside>
+  </main>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

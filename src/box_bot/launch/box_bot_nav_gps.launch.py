@@ -56,6 +56,9 @@ def generate_launch_description():
     moving_base_rtcm_topic = LaunchConfiguration('moving_base_rtcm_topic')
     start_lidar = LaunchConfiguration('start_lidar')
     start_hub = LaunchConfiguration('start_hub')
+    start_ui = LaunchConfiguration('start_ui')
+    ui_host = LaunchConfiguration('ui_host')
+    ui_port = LaunchConfiguration('ui_port')
     hub_serial_port = LaunchConfiguration('hub_serial_port')
     lidar_serial_port = LaunchConfiguration('lidar_serial_port')
     lidar_serial_baudrate = LaunchConfiguration('lidar_serial_baudrate')
@@ -170,6 +173,9 @@ def generate_launch_description():
         DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
         DeclareLaunchArgument('start_lidar', default_value='false'),
         DeclareLaunchArgument('start_hub', default_value='true'),
+        DeclareLaunchArgument('start_ui', default_value='true'),
+        DeclareLaunchArgument('ui_host', default_value='0.0.0.0'),
+        DeclareLaunchArgument('ui_port', default_value='8080'),
         DeclareLaunchArgument(
             'hub_serial_port',
             default_value='/dev/boxbot/hub'),
@@ -238,6 +244,14 @@ def generate_launch_description():
             package='box_bot', executable='esp32_hub.py', name='esp32_hub',
             output='screen', condition=IfCondition(start_hub),
             parameters=[{'port': ParameterValue(hub_serial_port, value_type=str)}],
+        ),
+        Node(
+            package='box_bot', executable='boxbot_ui.py', name='boxbot_ui',
+            output='screen', condition=IfCondition(start_ui),
+            parameters=[{
+                'host': ParameterValue(ui_host, value_type=str),
+                'port': ParameterValue(ui_port, value_type=int),
+            }],
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(

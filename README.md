@@ -77,6 +77,41 @@ Each costmap inflation layer uses one worker. The device setup installer adds
 `--ulimit rtprio=50` to future Isaac containers so the controller can obtain
 FIFO priority 50. Recreate the container to apply that allowance.
 
+## BOXBOT UI
+
+The GPS bringup starts BOXBOT UI at `http://<robot-ip>:8080`. It includes Google
+satellite imagery, robot position and heading, global/controller paths, local
+costmap obstacles, navigation feedback, and component health with telemetry
+ages. Battery readings include individual cell voltages. GNSS cards include
+RTK state, satellites, accuracy, UTC measurement age and USB transmit-buffer use.
+
+Choose **Set target**, click the map, adjust the compass heading and press
+**Send target pose**. Drag the pin to refine its position. **Cancel goal** also
+cancels goals submitted from RViz. Goal submission requires fresh localization
+and active planner/controller/BT nodes. The default goal-distance limit is 75 m,
+matching the current 150 m rolling navigation window. The node parameter
+`max_goal_distance` configures that limit.
+
+Navigation targets use robot_localization's `/fromLL` service and the real
+`NavigateToPose` action. Map overlays use a local projection sampled from
+`/toLL`, refreshed every 20 seconds. Goal/cancel commands are validated and
+processed in the ROS executor. The application uses the Python standard
+library and locally bundled Leaflet 1.9.4 assets. Satellite tile loading needs
+an internet connection.
+
+Launch arguments `start_ui:=false`, `ui_host:=127.0.0.1` and `ui_port:=8081`
+control startup and binding. The default bind address is `0.0.0.0`, so clients
+that can reach the robot's network can view telemetry and issue goal/cancel
+commands. The UI uses same-origin control requests, per-process CSRF tokens,
+bounded HTTP workers/queues and a read-only telemetry endpoint. Each client
+shares the robot's current navigation goal.
+
+To start only the UI from a sourced container shell:
+
+```bash
+ros2 run box_bot boxbot_ui.py
+```
+
 Velocity commands now use `geometry_msgs/msg/TwistStamped` on `/cmd_vel`:
 
 ```bash
