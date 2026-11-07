@@ -39,6 +39,7 @@ add_docker_arg() {
 
 add_docker_arg '-v /dev/boxbot:/dev/boxbot'
 add_docker_arg '-v /dev/bus/usb:/dev/bus/usb'
+add_docker_arg '--ulimit rtprio=50'
 
 echo "Installed ${RULES_DST}"
 echo "Added ${HOST_USER} to dialout,gpio,i2c,video,plugdev."

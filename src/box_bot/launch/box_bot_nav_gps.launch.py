@@ -110,6 +110,8 @@ def generate_launch_description():
     navsat_log_level = LaunchConfiguration('navsat_log_level')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
+    nav2_start_delay = LaunchConfiguration('nav2_start_delay')
+    nav2_use_composition = LaunchConfiguration('nav2_use_composition')
     log_level = LaunchConfiguration('log_level')
     ntrip_defaults = {
         'host': '127.0.0.1',
@@ -228,6 +230,8 @@ def generate_launch_description():
         DeclareLaunchArgument('navsat_log_level', default_value='warn'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),
+        DeclareLaunchArgument('nav2_start_delay', default_value='20.0'),
+        DeclareLaunchArgument('nav2_use_composition', default_value='true'),
         DeclareLaunchArgument('log_level', default_value='info'),
 
         Node(
@@ -564,8 +568,14 @@ def generate_launch_description():
         ),
 
         TimerAction(
-            period=5.0,
+            period=nav2_start_delay,
             actions=[
+                Node(
+                    package='rclcpp_components', executable='component_container_isolated',
+                    name='nav2_container', output='screen',
+                    condition=IfCondition(nav2_use_composition),
+                    arguments=['--ros-args', '--log-level', log_level],
+                ),
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource(
                         PathJoinSubstitution([
@@ -575,6 +585,7 @@ def generate_launch_description():
                     launch_arguments={
                         'use_sim_time': use_sim_time,
                         'autostart': autostart,
+                        'use_composition': nav2_use_composition,
                         'params_file': nav2_params,
                         'log_level': log_level,
                         'default_nav_to_pose_bt_xml': PathJoinSubstitution([

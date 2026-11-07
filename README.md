@@ -71,6 +71,12 @@ tail -f ~/.ros/log/latest/launch.log
 
 If `ROS_LOG_DIR` is configured, look under that directory instead.
 
+GPS bringup starts composed Nav2 after 20 seconds to let camera startup settle.
+Override with `nav2_start_delay:=...` or `nav2_use_composition:=false`.
+Each costmap inflation layer uses one worker. The device setup installer adds
+`--ulimit rtprio=50` to future Isaac containers so the controller can obtain
+FIFO priority 50. Recreate the container to apply that allowance.
+
 Velocity commands now use `geometry_msgs/msg/TwistStamped` on `/cmd_vel`:
 
 ```bash

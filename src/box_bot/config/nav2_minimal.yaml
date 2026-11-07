@@ -180,6 +180,7 @@ global_costmap:
           raytrace_min_range: 0.15
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
+        num_threads: 1
         cost_scaling_factor: 2.5
         inflation_radius: 1.0
       always_send_full_costmap: True
@@ -235,6 +236,7 @@ local_costmap:
           raytrace_min_range: 0.15
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
+        num_threads: 1
         cost_scaling_factor: 2.5
         inflation_radius: 1.0
       always_send_full_costmap: True

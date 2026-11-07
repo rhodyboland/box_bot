@@ -416,3 +416,13 @@ including missing-data timing, transmit backpressure, and stop/error on feedback
 timeout. These tests use pseudo-terminals. Under-load timing on the physical
 robot still needs validation. Real-time scheduling/container changes are pending
 approval and are not part of this driver change.
+
+The user subsequently approved the prepared startup patch. GPS bringup now
+defaults to component_container_isolated for its seven Nav2 servers, with a
+20-second startup delay and one inflation worker per costmap. The installer
+and host Docker argument file include --ulimit rtprio=50 for future containers.
+The box_bot build and launch argument loading passed. The composed arrangement
+passed three complete isolated-domain startups with BT Navigator active and the
+planner action available. An ephemeral admin process successfully acquired FIFO
+priority 50 under the proposed limit. Recreate the Isaac container to apply its
+new allowance, then verify startup and loop timing on the physical robot.
