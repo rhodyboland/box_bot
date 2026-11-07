@@ -11,7 +11,7 @@ Panels:
         - /Navigation1
         - /Odometry1
         - /Sensors1
-        - /Sensors1/Realsense PointCloud1
+        - /Sensors1/Realsense Obstacles1
       Splitter Ratio: 0.5
     Tree Height: 760
   - Class: rviz_common/Tool Properties
@@ -38,7 +38,7 @@ Visualization Manager:
       ENU Aligned Reference Frame: map
       Enabled: true
       Name: Satellite Aerial Map
-      Object URI: https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}
+      Object URI: http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}
       TF tolerance: 0.10000000149011612
       Timeout: 3
       Topic:
@@ -49,9 +49,9 @@ Visualization Manager:
         Value: /gps_rover/fix
       Use Local Map:
         Meter per Pixel (Zoom 0): 1
-        Origin CRS: ""
-        "Origin X ": 0
-        "Origin Y ": 0
+        Origin CRS: ''
+        'Origin X ': 0
+        'Origin Y ': 0
         Value: false
       Value: true
       Visualize in UTM Frame: false
@@ -76,11 +76,11 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/RobotModel
       Collision Enabled: false
-      Description File: ""
+      Description File: ''
       Description Source: Topic
       Description Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /robot_description
@@ -95,7 +95,7 @@ Visualization Manager:
         Inertia: false
         Mass: false
       Name: RobotModel
-      TF Prefix: ""
+      TF Prefix: ''
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -120,13 +120,13 @@ Visualization Manager:
           Binary representation: false
           Binary threshold: 100
           Class: rviz_default_plugins/Map
-          Color Scheme: map
+          Color Scheme: costmap
           Draw Behind: false
           Enabled: true
           Name: Global Costmap
           Topic:
             Depth: 5
-            Durability Policy: Volatile
+            Durability Policy: Transient Local
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
@@ -149,7 +149,7 @@ Visualization Manager:
           Name: Local Costmap
           Topic:
             Depth: 5
-            Durability Policy: Volatile
+            Durability Policy: Transient Local
             Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
@@ -440,16 +440,51 @@ Visualization Manager:
           Axis: Z
           Channel Name: z
           Class: rviz_default_plugins/PointCloud2
-          Color: 255; 255; 255
-          Color Transformer: AxisColor
-          Decay Time: 0.2
+          Color: 255; 150; 30
+          Color Transformer: FlatColor
+          Decay Time: 0.15
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: Realsense PointCloud
+          Name: Realsense Obstacles
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 2
+          Size (m): 0.04
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Best Effort
+            Value: /camera/depth/obstacles
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: z
+          Class: rviz_default_plugins/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: AxisColor
+          Decay Time: 0.2
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Realsense Raw Depth
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -465,7 +500,7 @@ Visualization Manager:
             Value: /camera/depth/color/points
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -478,7 +513,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 47
@@ -495,11 +530,11 @@ Visualization Manager:
             Durability Policy: Volatile
             Filter size: 10
             History Policy: Keep Last
-            Reliability Policy: Reliable
+            Reliability Policy: Best Effort
             Value: /scan
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Acceleration properties:
             Acc. vector alpha: 1
             Acc. vector color: 255; 0; 0
@@ -517,7 +552,7 @@ Visualization Manager:
             y_scale: 1
             z_scale: 1
           Class: rviz_imu_plugin/Imu
-          Enabled: true
+          Enabled: false
           Name: Physical IMU
           Topic:
             Depth: 5
@@ -526,7 +561,7 @@ Visualization Manager:
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /imu/data
-          Value: true
+          Value: false
           fixed_frame_orientation: true
         - Acceleration properties:
             Acc. vector alpha: 1
