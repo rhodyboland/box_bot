@@ -85,6 +85,10 @@ class ImuTiltCloudFilter(Node):
         self.declare_parameter('max_points', 16000)
         self.declare_parameter('use_imu_tilt', True)
         self.declare_parameter('imu_timeout_seconds', 0.5)
+        # Robot-specific IMU/mount alignment, calibrated against flat ground.
+        # Apply here only: navigation consumes the original IMU unchanged.
+        self.declare_parameter('imu_roll_offset_degrees', 0.0)
+        self.declare_parameter('imu_pitch_offset_degrees', 0.0)
 
         self._target_frame = str(self.get_parameter('target_frame').value)
         self._latest_imu = None
@@ -237,7 +241,10 @@ class ImuTiltCloudFilter(Node):
         timeout = float(self.get_parameter('imu_timeout_seconds').value)
         if (self.get_clock().now() - self._latest_imu_time) > Duration(seconds=timeout):
             return 0.0, 0.0
-        return _roll_pitch_from_quat(self._latest_imu.orientation)
+        roll, pitch = _roll_pitch_from_quat(self._latest_imu.orientation)
+        roll += math.radians(float(self.get_parameter('imu_roll_offset_degrees').value))
+        pitch += math.radians(float(self.get_parameter('imu_pitch_offset_degrees').value))
+        return roll, pitch
 
 
 def main(args=None):

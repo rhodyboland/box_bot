@@ -26,6 +26,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(gnss_migration test/test_gnss_migration.py)
   ament_add_pytest_test(hub test/test_hub.py)
   ament_add_pytest_test(console_logging test/test_console_logging.py)
+  ament_add_pytest_test(ground_filter test/test_ground_filter.py)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files

@@ -85,6 +85,8 @@ def generate_launch_description():
     realsense_obstacle_min_height = LaunchConfiguration('realsense_obstacle_min_height')
     realsense_obstacle_max_height = LaunchConfiguration('realsense_obstacle_max_height')
     realsense_obstacle_ground_height = LaunchConfiguration('realsense_obstacle_ground_height')
+    realsense_ground_roll_offset_degrees = LaunchConfiguration('realsense_ground_roll_offset_degrees')
+    realsense_ground_pitch_offset_degrees = LaunchConfiguration('realsense_ground_pitch_offset_degrees')
     realsense_obstacle_downsample_step = LaunchConfiguration('realsense_obstacle_downsample_step')
     realsense_obstacle_max_points = LaunchConfiguration('realsense_obstacle_max_points')
     start_ntrip = LaunchConfiguration('start_ntrip')
@@ -197,7 +199,10 @@ def generate_launch_description():
         DeclareLaunchArgument('realsense_obstacle_filter_enable', default_value='true'),
         DeclareLaunchArgument('realsense_obstacle_min_height', default_value='0.15'),
         DeclareLaunchArgument('realsense_obstacle_max_height', default_value='1.0'),
-        DeclareLaunchArgument('realsense_obstacle_ground_height', default_value='-0.10'),
+        # Flat-ground cloud/IMU calibration for the 16 cm / 5-degree bracket.
+        DeclareLaunchArgument('realsense_obstacle_ground_height', default_value='-0.117'),
+        DeclareLaunchArgument('realsense_ground_roll_offset_degrees', default_value='0.25'),
+        DeclareLaunchArgument('realsense_ground_pitch_offset_degrees', default_value='3.0'),
         DeclareLaunchArgument('realsense_obstacle_downsample_step', default_value='6'),
         DeclareLaunchArgument('realsense_obstacle_max_points', default_value='16000'),
         DeclareLaunchArgument('start_ntrip', default_value='true'),
@@ -373,6 +378,10 @@ def generate_launch_description():
                     realsense_obstacle_ground_height,
                     value_type=float,
                 ),
+                'imu_roll_offset_degrees': ParameterValue(
+                    realsense_ground_roll_offset_degrees, value_type=float),
+                'imu_pitch_offset_degrees': ParameterValue(
+                    realsense_ground_pitch_offset_degrees, value_type=float),
                 'min_obstacle_height': ParameterValue(
                     realsense_obstacle_min_height,
                     value_type=float,

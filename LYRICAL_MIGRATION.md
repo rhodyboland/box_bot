@@ -348,3 +348,28 @@ rotates the forward axis downward. Both hoverboard_control and box_bot built.
 Running navigation/camera/TF publishers were not restarted; restart bringup to
 apply the camera remap and mount transform together. Filtered points remain on
 /camera/depth/obstacles for RViz and the local costmap.
+
+### Flat-ground filtering calibration (7 November)
+
+Captured eight live clouds with the revised mount, while the user confirmed
+the robot stationary on flat ground. In base_link, 137,232/138,256 points in
+the ground ROI supported z=0.01713489*x+0.02164184*y-0.11681188 (25 mm plane
+inlier tolerance). Median BNO roll/pitch were -1.471/-1.980 degrees. Together,
+the old leveling calculation raised the apparent ground to 16–19 cm at 3–4 m
+and 20–24 cm at 4–5 m, crossing the unchanged 15 cm obstacle cutoff.
+
+Added filter-only IMU roll/pitch offset parameters. GPS bringup now defaults to
+roll offset +0.25 degrees, pitch offset +3.0 degrees, and ground_height=-0.117 m.
+These values align the measured cloud plane and IMU at this calibration pose;
+they do not establish whether the discrepancy comes from camera angle, IMU
+mounting, or orientation bias. Navigation IMU data, URDF and obstacle height
+limits are unchanged. Recalibrate these filter parameters if the mounts move.
+
+Captured-cloud replay through the actual filter reduced fitted ground points
+incorrectly retained from 775 to zero; the corrected ground residual's 1st–99th
+percentiles were approximately -17 to +22 mm. A synthetic scene based on the
+measured plane retained 20 cm obstacles at 1, 3 and 4.5 m while rejecting the
+ground at all three ranges. The regression and nine existing GNSS tests passed.
+The box_bot build passed. Running nodes were not restarted; launch again to
+load the new filter code and calibrated defaults. Terrain/obstacle checks while
+moving remain necessary after this stationary calibration.
