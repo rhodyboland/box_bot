@@ -11,7 +11,8 @@ import yaml
 
 import rclpy
 from lifecycle_msgs.srv import ChangeState
-from rcl_interfaces.srv import ListParameters
+from rcl_interfaces.srv import GetParameters, ListParameters
+from rclpy.parameter import parameter_value_to_python
 
 
 def main():
@@ -49,8 +50,8 @@ def main():
                 command, stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
 
         if args.composition:
-            start(['/opt/ros/lyrical/lib/rclcpp_components/component_container',
-                   '--ros-args', '-r', '__node:=nav2_container',
+            start(['/opt/ros/lyrical/lib/rclcpp_components/component_container_isolated',
+                   '--ros-args', '--params-file', str(params), '-r', '__node:=nav2_container',
                    '-r', f'__ns:=/{namespace}'], 'components')
             start(['ros2', 'launch', 'nav2_launcher', 'nav2_launch.py',
                    f'namespace:={namespace}', 'use_composition:=true',
@@ -93,6 +94,41 @@ def main():
                 unknown = server_keys - declared
                 if unknown:
                     raise failure(name, f'undeclared server overrides: {sorted(unknown)}')
+        if args.audit_parameters:
+            configuration = yaml.safe_load(args.params.read_text())
+            for costmap in ('local_costmap', 'global_costmap'):
+                expected = configuration[costmap][costmap]['ros__parameters']
+                keys = ['plugins', 'global_frame', 'robot_base_frame', 'rolling_window',
+                        'width', 'height', 'resolution', 'robot_radius']
+                keys = [key for key in keys if key in expected]
+                expected_values = {key: expected[key] for key in keys}
+                for layer in expected['plugins']:
+                    settings = expected.get(layer, {})
+                    if 'observation_sources' in settings:
+                        expected_values[f'{layer}.observation_sources'] = settings['observation_sources']
+                        for source in settings['observation_sources'].split():
+                            for key in ('topic', 'marking', 'clearing', 'observation_persistence'):
+                                if key in settings[source]:
+                                    expected_values[f'{layer}.{source}.{key}'] = settings[source][key]
+                    if 'num_threads' in settings:
+                        expected_values[f'{layer}.num_threads'] = settings['num_threads']
+                keys = list(expected_values)
+                client = node.create_client(
+                    GetParameters, f'/{namespace}/{costmap}/{costmap}/get_parameters')
+                if not client.wait_for_service(timeout_sec=5):
+                    raise failure(costmap, 'child parameter service unavailable')
+                request = GetParameters.Request()
+                request.names = keys
+                future = client.call_async(request)
+                rclpy.spin_until_future_complete(node, future, timeout_sec=5)
+                if not future.done() or future.result() is None:
+                    raise failure(costmap, 'child parameter request timed out')
+                actual = dict(zip(keys, map(parameter_value_to_python, future.result().values)))
+                mismatches = {key: (expected_values[key], actual[key]) for key in keys
+                              if expected_values[key] != actual[key]}
+                if mismatches:
+                    raise failure(costmap, f'child parameters differ (expected, actual): {mismatches}')
+                print(f'{costmap}: child parameters passed', flush=True)
     finally:
         for process in processes:
             if process.poll() is None:

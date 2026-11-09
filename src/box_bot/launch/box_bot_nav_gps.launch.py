@@ -587,6 +587,9 @@ def generate_launch_description():
                 Node(
                     package='rclcpp_components', executable='component_container_isolated',
                     name='nav2_container', output='screen',
+                    # Costmaps are child nodes created inside the components.
+                    # They need the complete parameter file in the ROS context.
+                    parameters=[nav2_params],
                     condition=IfCondition(nav2_use_composition),
                     arguments=['--ros-args', '--log-level', log_level],
                 ),
