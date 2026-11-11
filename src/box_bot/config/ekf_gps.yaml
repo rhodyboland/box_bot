@@ -12,18 +12,19 @@ ekf_filter_node_odom:
     base_link_frame: base_footprint
     world_frame: odom
 
-    # Wheel odom (local continuity). Use the diff-drive controller's integrated
-    # pose for local odom; GPS owns global/map corrections.
+    # Wheel velocity supplies local translation. Integrated encoder pose/yaw
+    # also integrates wheel slip and must not override the physical gyro.
+    # Fuse lateral zero velocity as the differential-drive motion constraint.
     odom0: /hoverboard_base_controller/odom
     odom0_config: [
-      true,  true,  false,   # x, y, z
-      false, false, true,    # roll, pitch, yaw
-      false, false, false,   # vx, vy, vz
+      false, false, false,   # x, y, z
+      false, false, false,   # roll, pitch, yaw
+      true,  true,  false,   # vx, vy, vz
       false, false, false,   # vroll, vpitch, vyaw
       false, false, false    # ax, ay, az
     ]
     odom0_differential: false
-    odom0_relative: true
+    odom0_relative: false
     odom0_queue_size: 5
 
     # Physical IMU is used only as a short-term yaw-rate source. Do not fuse its
@@ -44,6 +45,7 @@ navsat_transform:
   ros__parameters:
     frequency: 5.0
     delay: 2.0
+    transform_timeout: 0.5
     log_level: "ERROR"
     magnetic_declination_radians: 0.0
     yaw_offset: 0.0

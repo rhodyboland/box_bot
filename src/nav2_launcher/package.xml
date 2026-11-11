@@ -7,7 +7,17 @@
   <maintainer email="rhodyboland@hotmail.com">Rhody Boland</maintainer>
   <license>Apache-2.0</license>
 
+  <depend>nav2_waypoint_follower</depend>
+  <depend>nav2_navfn_planner</depend>
+  <depend>nav2_util</depend>
+  <depend>behaviortree_cpp</depend>
+  <depend>pluginlib</depend>
+  <test_depend>ament_cmake_gtest</test_depend>
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <exec_depend>composition_interfaces</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

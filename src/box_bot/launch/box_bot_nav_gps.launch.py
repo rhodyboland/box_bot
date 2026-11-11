@@ -4,13 +4,15 @@ import re
 
 import launch.logging
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, SetEnvironmentVariable, TimerAction, RegisterEventHandler, EmitEvent
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import Command, FindExecutable, EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
-from launch_ros.substitutions import FindPackageShare
+from launch_ros.substitutions import FindPackageShare, ExecutableInPackage
 
 
 class QuietConsole(logging.Filter):
@@ -43,6 +45,18 @@ def configure_console(context):
         handler.addFilter(QuietConsole())
 
 
+def check_startup_executables(context):
+    # Resolve entry points before any sensor or power process is launched.
+    required = ['hoverboard_wait_ready.py']
+    if IfCondition(LaunchConfiguration('start_hub')).evaluate(context):
+        required.append('esp32_hub.py')
+    if IfCondition(LaunchConfiguration('start_ui')).evaluate(context):
+        required.append('boxbot_ui.py')
+    for executable in required:
+        ExecutableInPackage(package='box_bot', executable=executable).perform(context)
+    return []
+
+
 def generate_launch_description():
     # ExecuteProcess reads this at construction, including in nested launches.
     # Keep stdout/stderr in launch.log even for nodes configured as screen-only.
@@ -56,6 +70,21 @@ def generate_launch_description():
     moving_base_rtcm_topic = LaunchConfiguration('moving_base_rtcm_topic')
     start_lidar = LaunchConfiguration('start_lidar')
     start_hub = LaunchConfiguration('start_hub')
+    power_ready = Node(package='box_bot', executable='hoverboard_wait_ready.py',
+                       name='hoverboard_wait_ready', output='screen')
+
+    def start_controller(event, context):
+        if context.is_shutdown:
+            return []
+        if event.returncode != 0:
+            return [EmitEvent(event=Shutdown(reason='Hoverboard hub power confirmation failed'))]
+        return [IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py'])),
+            launch_arguments={'hoverboard_power_on': 'false',
+                              'hoverboard_power_off_on_shutdown': 'false',
+                              'start_robot_state_publisher': 'false'}.items()), navsat_node]
+
     start_ui = LaunchConfiguration('start_ui')
     ui_host = LaunchConfiguration('ui_host')
     ui_port = LaunchConfiguration('ui_port')
@@ -139,6 +168,22 @@ def generate_launch_description():
         'send_gga': False,
     }
 
+    navsat_node = Node(
+        package='robot_localization',
+        executable='navsat_transform_node',
+        name='navsat_transform',
+        output='screen',
+        parameters=[ekf_params],
+        arguments=['--ros-args', '--log-level', navsat_log_level],
+        remappings=[
+            ('gps/fix', navsat_fix_topic),
+            ('imu', '/gps/heading_corrected'),
+            # GPS positions must be expressed in the map EKF's frame.
+            ('odometry/filtered', '/odometry/global'),
+            ('odometry/gps', '/odometry/gps'),
+        ],
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'console_verbose', default_value='false',
@@ -173,7 +218,11 @@ def generate_launch_description():
         DeclareLaunchArgument('moving_base_rtcm_topic', default_value='/rtcm'),
         DeclareLaunchArgument('start_lidar', default_value='false'),
         DeclareLaunchArgument('start_hub', default_value='true'),
+        DeclareLaunchArgument('hoverboard_power_off_on_shutdown', default_value='true'),
         DeclareLaunchArgument('start_ui', default_value='true'),
+        DeclareLaunchArgument('traction_recovery_max_attempts', default_value='2'),
+        DeclareLaunchArgument('traction_recovery_enabled', default_value='true'),
+        DeclareLaunchArgument('traction_recovery_delay_seconds', default_value='2.0'),
         DeclareLaunchArgument('ui_host', default_value='0.0.0.0'),
         DeclareLaunchArgument('ui_port', default_value='8080'),
         DeclareLaunchArgument(
@@ -190,9 +239,9 @@ def generate_launch_description():
         DeclareLaunchArgument('realsense_camera_name', default_value='camera'),
         DeclareLaunchArgument('realsense_serial_no', default_value=''),
         DeclareLaunchArgument('realsense_depth_enable', default_value='true'),
-        DeclareLaunchArgument('realsense_color_enable', default_value='false'),
+        DeclareLaunchArgument('realsense_color_enable', default_value='true'),
         DeclareLaunchArgument('realsense_depth_profile', default_value='640x480x15'),
-        DeclareLaunchArgument('realsense_color_profile', default_value='640x480x15'),
+        DeclareLaunchArgument('realsense_color_profile', default_value='424x240x15'),
         DeclareLaunchArgument('realsense_clip_distance', default_value='6.0'),
         # Daylight usually overwhelms the active IR projector; passive stereo is cleaner outside.
         DeclareLaunchArgument('realsense_emitter_enabled', default_value='0'),
@@ -237,20 +286,45 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('autostart', default_value='true'),
         DeclareLaunchArgument('nav2_start_delay', default_value='20.0'),
-        DeclareLaunchArgument('nav2_use_composition', default_value='true'),
+        DeclareLaunchArgument('nav2_use_composition', default_value='false'),
         DeclareLaunchArgument('log_level', default_value='info'),
+        DeclareLaunchArgument('dds_profile_file', default_value=EnvironmentVariable(
+            'FASTDDS_DEFAULT_PROFILES_FILE', default_value=EnvironmentVariable(
+                'FASTRTPS_DEFAULT_PROFILES_FILE', default_value=PathJoinSubstitution([
+                    FindPackageShare('box_bot'), 'config', 'fastdds_large_data.xml'])))),
+        SetEnvironmentVariable('FASTDDS_DEFAULT_PROFILES_FILE', LaunchConfiguration('dds_profile_file')),
 
+        OpaqueFunction(function=check_startup_executables),
+        Node(package='robot_state_publisher', executable='robot_state_publisher',
+             output='screen', parameters=[{'robot_description': ParameterValue(Command([
+                 FindExecutable(name='xacro'), ' ', PathJoinSubstitution([
+                     FindPackageShare('hoverboard_control'), 'urdf', 'hoverboard_description.xacro'])
+             ]), value_type=str)}]),
         Node(
             package='box_bot', executable='esp32_hub.py', name='esp32_hub',
             output='screen', condition=IfCondition(start_hub),
-            parameters=[{'port': ParameterValue(hub_serial_port, value_type=str)}],
+            parameters=[{'port': ParameterValue(hub_serial_port, value_type=str),
+                         'manage_hoverboard_power': True,
+                         'power_off_on_shutdown': ParameterValue(LaunchConfiguration('hoverboard_power_off_on_shutdown'), value_type=bool)}],
+            sigterm_timeout='12', sigkill_timeout='12',
+            on_exit=lambda event, context: [] if context.is_shutdown else [
+                EmitEvent(event=Shutdown(reason='ESP32 hub exited'))],
         ),
         Node(
             package='box_bot', executable='boxbot_ui.py', name='boxbot_ui',
             output='screen', condition=IfCondition(start_ui),
+            on_exit=lambda event, context: [] if context.is_shutdown else [
+                EmitEvent(event=Shutdown(reason='BOXBOT UI exited'))],
             parameters=[{
+                'traction_recovery_max_attempts': ParameterValue(LaunchConfiguration('traction_recovery_max_attempts'), value_type=int),
+                'traction_recovery_enabled': ParameterValue(LaunchConfiguration('traction_recovery_enabled'), value_type=bool),
+                'traction_recovery_delay_seconds': ParameterValue(LaunchConfiguration('traction_recovery_delay_seconds'), value_type=float),
+                'tuning_config_file': ParameterValue(nav2_params, value_type=str),
                 'host': ParameterValue(ui_host, value_type=str),
                 'port': ParameterValue(ui_port, value_type=int),
+                'preview_topic': PathJoinSubstitution([
+                    '/', realsense_camera_namespace, realsense_camera_name, 'color', 'image_raw'
+                ]),
             }],
         ),
         IncludeLaunchDescription(
@@ -260,13 +334,8 @@ def generate_launch_description():
                 ])
             ),
         ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                PathJoinSubstitution([
-                    FindPackageShare('hoverboard_control'), 'launch', 'hoverboard.launch.py'
-                ])
-            )
-        ),
+        RegisterEventHandler(OnProcessExit(target_action=power_ready, on_exit=start_controller)),
+        power_ready,
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution([
@@ -289,6 +358,7 @@ def generate_launch_description():
             actions=[
                 Node(
                     package='realsense2_camera',
+                    sigterm_timeout='15',
                     executable='realsense2_camera_node',
                     namespace=realsense_camera_namespace,
                     name=realsense_camera_name,
@@ -557,21 +627,6 @@ def generate_launch_description():
         ),
         Node(
             package='robot_localization',
-            executable='navsat_transform_node',
-            name='navsat_transform',
-            output='screen',
-            parameters=[ekf_params],
-            arguments=['--ros-args', '--log-level', navsat_log_level],
-            remappings=[
-                ('gps/fix', navsat_fix_topic),
-                ('imu', '/gps/heading_corrected'),
-                # GPS positions must be expressed in the map EKF's frame.
-                ('odometry/filtered', '/odometry/global'),
-                ('odometry/gps', '/odometry/gps'),
-            ],
-        ),
-        Node(
-            package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node_map',
             output='screen',
@@ -585,13 +640,14 @@ def generate_launch_description():
             period=nav2_start_delay,
             actions=[
                 Node(
-                    package='rclcpp_components', executable='component_container_isolated',
+                    package='rclcpp_components', executable='component_container',
                     name='nav2_container', output='screen',
                     # Costmaps are child nodes created inside the components.
                     # They need the complete parameter file in the ROS context.
                     parameters=[nav2_params],
                     condition=IfCondition(nav2_use_composition),
-                    arguments=['--ros-args', '--log-level', log_level],
+                    arguments=['--executor-type', 'single-threaded', '--isolated',
+                               '--ros-args', '--log-level', log_level],
                 ),
                 IncludeLaunchDescription(
                     PythonLaunchDescriptionSource(

@@ -9,10 +9,13 @@ bt_navigator:
     odom_topic: /odometry/local
     bt_loop_duration: 10
     default_server_timeout: 1000
+    # FollowPath runs at 10 Hz. Allow its terminal result after cancellation.
+    default_cancel_timeout: 1000
     # BT action-server discovery at startup (milliseconds), including planner.
     wait_for_service_timeout: 10000
     action_server_result_timeout: 900.0
     default_nav_to_pose_bt_xml: ""
+    plugin_lib_names: ["boxbot_capture_wayline_bt_node"]
     navigators: ["navigate_to_pose", "navigate_through_poses"]
     navigate_to_pose:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
@@ -41,7 +44,7 @@ controller_server:
       prune_distance: 3.0
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.5
       yaw_goal_tolerance: 3.14
       stateful: True
     progress_checker:
@@ -53,11 +56,11 @@ controller_server:
       debug_trajectory_details: false
       min_vel_x: 0.03
       min_vel_y: 0.0
-      max_vel_x: 0.4
+      max_vel_x: 0.6
       max_vel_y: 0.0
       max_vel_theta: 0.8
       min_speed_xy: 0.0
-      max_speed_xy: 0.4
+      max_speed_xy: 0.6
       min_speed_theta: 0.0
       acc_lim_x: 0.25
       acc_lim_y: 0.0
@@ -65,16 +68,20 @@ controller_server:
       decel_lim_x: -0.25
       decel_lim_y: 0.0
       decel_lim_theta: -0.8
-      vx_samples: 24
+      # Bound DWB scoring work to fit the 100 ms control cycle.
+      vx_samples: 12
       vy_samples: 1
-      vtheta_samples: 32
+      vtheta_samples: 24
       sim_time: 2.5
       linear_granularity: 0.05
       angular_granularity: 0.025
       short_circuit_trajectory_evaluation: True
-      critics: ["Oscillation","BaseObstacle","ObstacleFootprint","PathDist","GoalDist"]
+      critics: ["Oscillation","BaseObstacle","ObstacleFootprint","PathAlign","PathDist","GoalDist"]
       BaseObstacle.scale: 0.35
-      PathDist.scale: 8.0
+      # Score nose alignment as well as progress to avoid wide corrective arcs.
+      PathAlign.scale: 24.0
+      PathAlign.forward_point_distance: 0.3
+      PathDist.scale: 32.0
       GoalDist.scale: 10.0
       ObstacleFootprint.scale: 2.0
       Oscillation.scale: 1.0
@@ -83,9 +90,17 @@ planner_server:
   ros__parameters:
     use_sim_time: false
     expected_planner_frequency: 10.0
-    planner_plugins: ["GridBased"]
+    planner_plugins: ["GridBased", "Wayline"]
     GridBased:
       plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: true
+      allow_unknown: true
+    Wayline:
+      plugin: "nav2_launcher::WaylinePlanner"
+      # Add a soft cross-track cost to GPS legs. Obstacle costs are preserved.
+      wayline_cost_per_metre: 45.0
+      wayline_maximum_cost: 100.0
       tolerance: 0.5           # a little slack at the goal
       use_astar: true
       allow_unknown: true
@@ -137,15 +152,17 @@ global_costmap:
     ros__parameters:
       use_sim_time: False
       update_frequency: 2.0
-      publish_frequency: 2.0
+      publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_footprint
       rolling_window: true
       track_unknown_space: false
-      # Make this generous so most goals are in-bounds
-      width: 150
-      height: 150
-      resolution: 0.2
+      # Keep 300 m goals inside the rolling window with a 25 m margin.
+      width: 650
+      height: 650
+      # Coarse long-range planning keeps the 650 m window affordable.
+      # Local avoidance retains its 10 cm grid.
+      resolution: 0.5
       # Replan around camera obstacles instead of asking the local controller
       # to follow a straight GPS path through them. Match the local footprint.
       robot_radius: 0.4
@@ -156,6 +173,7 @@ global_costmap:
         footprint_clearing_enabled: True
         max_obstacle_height: 1.0
         observation_sources: realsense_mark realsense_clear
+        # Expire old scans after half a second, even if the stream stalls.
         realsense_mark:
           topic: /camera/depth/obstacles
           max_obstacle_height: 1.0
@@ -163,19 +181,20 @@ global_costmap:
           clearing: False
           marking: True
           data_type: "PointCloud2"
-          observation_persistence: 0.0
-          expected_update_rate: 0.0
+          observation_persistence: 0.5
+          expected_update_rate: 1.0
           obstacle_max_range: 5.0
           obstacle_min_range: 0.15
         realsense_clear:
-          topic: /camera/depth/color/points
+          topic: /camera/depth/clearing
+          sensor_frame: camera_link
           max_obstacle_height: 1.0
           min_obstacle_height: -0.20
           clearing: True
           marking: False
           data_type: "PointCloud2"
-          observation_persistence: 0.0
-          expected_update_rate: 0.0
+          observation_persistence: 0.5
+          expected_update_rate: 1.0
           raytrace_max_range: 6.0
           raytrace_min_range: 0.15
       inflation_layer:
@@ -204,7 +223,7 @@ local_costmap:
       robot_radius: 0.4
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
-        # Height-filtered marking is already performed upstream. Project raw
+        # Height-filtered marking is already performed upstream. Project sampled
         # depth clearing rays into 2D so ground rays clear the entire old cell,
         # rather than missing persistent elevated voxels as the camera turns.
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -219,19 +238,20 @@ local_costmap:
           clearing: False
           marking: True
           data_type: "PointCloud2"
-          observation_persistence: 0.0
-          expected_update_rate: 0.0
+          observation_persistence: 0.5
+          expected_update_rate: 1.0
           obstacle_max_range: 5.0
           obstacle_min_range: 0.15
         realsense_clear:
-          topic: /camera/depth/color/points
+          topic: /camera/depth/clearing
+          sensor_frame: camera_link
           max_obstacle_height: 1.0
           min_obstacle_height: -0.20
           clearing: True
           marking: False
           data_type: "PointCloud2"
-          observation_persistence: 0.0
-          expected_update_rate: 0.0
+          observation_persistence: 0.5
+          expected_update_rate: 1.0
           raytrace_max_range: 6.0
           raytrace_min_range: 0.15
       inflation_layer:
@@ -259,8 +279,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.4, 0.0, 0.8]
-    min_velocity: [-0.05, 0.0, -0.8]
+    max_velocity: [0.6, 0.0, 0.8]
+    min_velocity: [-0.6, 0.0, -0.8]
     max_accel: [0.25, 0.0, 0.8]
     max_decel: [-0.25, 0.0, -0.8]
     odom_topic: /odometry/local

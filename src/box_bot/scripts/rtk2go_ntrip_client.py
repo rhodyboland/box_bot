@@ -8,6 +8,7 @@ import threading
 import time
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rtcm_msgs.msg import Message as RtcmMessage
 from sensor_msgs.msg import NavSatFix
@@ -118,6 +119,7 @@ class Rtk2GoNtripClient(Node):
         self._rtcm_bad_crc_count = 0
         self._rtcm_type_counts = Counter()
         self._running = True
+        self._stop = threading.Event()
         self._pub = self.create_publisher(RtcmMessage, 'rtcm', 10)
         self.create_subscription(NavSatFix, 'fix', self._fix_callback, 10)
 
@@ -126,6 +128,7 @@ class Rtk2GoNtripClient(Node):
 
     def destroy_node(self):
         self._running = False
+        self._stop.set()
         if self._thread.is_alive():
             self._thread.join(timeout=2.0)
         super().destroy_node()
@@ -297,7 +300,8 @@ class Rtk2GoNtripClient(Node):
                     if published:
                         last_rtcm = time.monotonic()
             except Exception as exc:
-                self.get_logger().error(f'NTRIP disconnected: {exc}')
+                if self._running and rclpy.ok():
+                    self.get_logger().error(f'NTRIP disconnected: {exc}')
             finally:
                 if sock is not None:
                     try:
@@ -305,7 +309,7 @@ class Rtk2GoNtripClient(Node):
                     except OSError:
                         pass
             if self._running:
-                time.sleep(self._reconnect_wait)
+                self._stop.wait(self._reconnect_wait)
 
 
 def main():
@@ -313,9 +317,12 @@ def main():
     node = Rtk2GoNtripClient()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

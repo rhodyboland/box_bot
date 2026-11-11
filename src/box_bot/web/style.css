@@ -804,3 +804,41 @@ footer {
 
 }
 
+
+.trail-key { width:20px; height:3px; background:#f472d0 }
+.map-toolbar { flex-wrap:wrap }
+.waypoint-pin span { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#ffad4c; color:#111719; border:2px solid #fff; font-weight:800 }
+.waypoint-list { list-style:none; padding:0; max-height:250px; overflow-y:auto }
+.waypoint-list li { display:flex; align-items:center; gap:5px; margin:8px 0; font-size:11px }
+.waypoint-list li span { flex:1 }
+.waypoint-list input { width:54px; padding:5px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:5px }
+.waypoint-list button { padding:4px 9px }
+.route-actions { display:flex; gap:8px; margin-bottom:10px }
+.route-actions button { flex:1 }
+.route-panel .primary { width:100% }
+.track-toggle { display:flex; gap:7px; align-items:center; font-size:12px; margin:15px 0 10px }
+
+.filter-height-controls { display:flex; align-items:center; gap:12px; margin:16px 0 }
+.filter-height-controls input { flex:1; min-width:0; accent-color:var(--orange) }
+.filter-height-controls output { min-width:48px; text-align:right; font-weight:700 }
+.ground-filter-panel > label { font-size:12px; color:var(--muted) }
+.ground-filter-panel .primary { width:100% }
+
+.preview-toggle { display:flex; align-items:center; gap:7px; font-size:12px }
+#camera-preview { display:block; width:100%; max-width:320px; height:auto; margin:12px auto; border-radius:8px }
+#camera-preview[hidden] { display:none }
+
+.traction-metrics { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0 }
+.traction-metrics dt { font-size:10px; color:var(--muted); margin-bottom:4px }
+.traction-metrics dd { margin:0; font-size:14px; font-variant-numeric:tabular-nums }
+.traction-log { overflow-wrap:anywhere; font-size:10px }
+
+.traction-panel .filter-height-controls input[type=number] { flex:0 0 54px; width:54px }
+
+.tuning-fields { display:grid; gap:12px; margin:16px 0 }
+.tuning-field { display:grid; grid-template-columns:1fr 84px; gap:4px 10px; align-items:center }
+.tuning-field label { font-size:12px }
+.tuning-field input { width:84px; box-sizing:border-box; padding:7px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:5px }
+.tuning-field small { grid-column:1 / -1; color:var(--muted); font-size:10px }
+.tuning-field.changed input { border-color:var(--orange) }
+.tuning-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px }

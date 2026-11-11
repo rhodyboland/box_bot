@@ -1,10 +1,20 @@
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <PipelineSequence name="GpsNavigateToPose">
-      <RateController hz="1.0">
-        <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
-      </RateController>
-      <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker"/>
-    </PipelineSequence>
+    <CaptureWayline goal="{goal}" reference="{wayline_reference}">
+      <PauseResumeController pause_service_name="/traction_recovery/pause_navigation"
+                             resume_service_name="/traction_recovery/resume_navigation">
+        <RecoveryNode number_of_retries="3" name="RetryGpsNavigation">
+          <PipelineSequence name="GpsNavigateToPose">
+            <RateController hz="1.0">
+              <ComputePathToPose goal="{goal}" path="{path}" planner_id="Wayline" viapoints="{wayline_reference}"
+                                 error_code_id="{compute_path_error_code}" error_msg="{compute_path_error_msg}"/>
+            </RateController>
+            <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker"
+                        error_code_id="{follow_path_error_code}" error_msg="{follow_path_error_msg}"/>
+          </PipelineSequence>
+          <Wait wait_duration="2.0"/>
+        </RecoveryNode>
+      </PauseResumeController>
+    </CaptureWayline>
   </BehaviorTree>
 </root>

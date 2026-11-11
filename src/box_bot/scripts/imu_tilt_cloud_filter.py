@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 import math
-import struct
+import numpy as np
 from array import array
+from collections import deque
 
 import rclpy
 from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from rclpy.time import Time
 from sensor_msgs.msg import Imu, PointCloud2, PointField
 from tf2_ros import Buffer, TransformException, TransformListener
@@ -68,15 +69,74 @@ def _roll_pitch_from_quat(q):
     return roll, pitch
 
 
+def _height_above_terrain(x, y, level_z, chassis_z, ground_height, max_slope):
+    """Estimate ground from low returns connected to the visible near floor."""
+    height = level_z - ground_height
+    if len(x) < 3 or not 0.0 < max_slope < 45.0:
+        return height
+
+    cell_size = 0.30
+    grid_x = np.floor(x / cell_size).astype(np.intp)
+    grid_y = np.floor(y / cell_size).astype(np.intp)
+    min_y = grid_y.min()
+    width = grid_y.max() - min_y + 1
+    # Sort scalar keys to avoid a row-wise sort of the whole point cloud.
+    keys, cell_ids, counts = np.unique(
+        grid_x * width + (grid_y - min_y), return_inverse=True, return_counts=True,
+    )
+    cells = list(zip(*np.divmod(keys, width)))
+    # A lower quantile ignores isolated low depth noise and the tops of
+    # objects in cells where the floor is also visible.
+    order = np.lexsort((level_z, cell_ids))
+    starts = np.cumsum(counts) - counts
+    floor_sample = order[starts + (counts - 1) // 5]
+    floor = level_z[floor_sample]
+    supported = counts >= 3
+    lookup = {cell: i for i, cell in enumerate(cells)}
+
+    near = (x[floor_sample] >= 0.0) & (np.hypot(x[floor_sample], y[floor_sample]) <= 2.0)
+    # Use the chassis plane only to seed the search. Once on a bank, its
+    # first visible ground can already be well above the gravity-level plane.
+    seeds = np.flatnonzero(supported & near &
+                           (np.abs(chassis_z[floor_sample] - ground_height) <= 0.08))
+    connected = np.zeros(len(cells), dtype=bool)
+    connected[seeds] = True
+    adjacent_ground = np.full(len(cells), np.inf)
+    queue = deque(seeds)
+    step_limit = min(0.12, cell_size * math.tan(math.radians(max_slope)) + 0.02)
+    while queue:
+        index = queue.popleft()
+        ix, iy = cells[index]
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            neighbor = lookup.get((ix + dx, iy + dy))
+            if neighbor is None or connected[neighbor]:
+                continue
+            if supported[neighbor] and abs(floor[neighbor] - floor[index]) <= step_limit:
+                connected[neighbor] = True
+                queue.append(neighbor)
+            else:
+                adjacent_ground[neighbor] = min(adjacent_ground[neighbor], floor[index])
+
+    # A disconnected return next to the surface can still be measured
+    # against it without treating that return as additional ground.
+    reference = np.where(connected, floor, adjacent_ground)[cell_ids]
+    known = np.isfinite(reference)
+    height[known] = level_z[known] - reference[known]
+    return height
+
+
 class ImuTiltCloudFilter(Node):
     def __init__(self):
         super().__init__('imu_tilt_cloud_filter')
 
         self.declare_parameter('input_cloud_topic', '/camera/depth/color/points')
         self.declare_parameter('output_cloud_topic', '/camera/depth/obstacles')
+        self.declare_parameter('output_clearing_cloud_topic', '/camera/depth/clearing')
+        self.declare_parameter('clearing_max_range', 6.0)
         self.declare_parameter('imu_topic', '/imu/data')
         self.declare_parameter('target_frame', 'base_link')
         self.declare_parameter('ground_height', -0.10)
+        self.declare_parameter('terrain_max_slope_degrees', 18.0)
         self.declare_parameter('min_obstacle_height', 0.15)
         self.declare_parameter('max_obstacle_height', 1.0)
         self.declare_parameter('min_range', 0.20)
@@ -103,6 +163,11 @@ class ImuTiltCloudFilter(Node):
             str(self.get_parameter('output_cloud_topic').value),
             qos_profile_sensor_data,
         )
+        self._clearing_pub = self.create_publisher(
+            PointCloud2,
+            str(self.get_parameter('output_clearing_cloud_topic').value),
+            qos_profile_sensor_data,
+        )
         self.create_subscription(
             Imu,
             str(self.get_parameter('imu_topic').value),
@@ -113,7 +178,7 @@ class ImuTiltCloudFilter(Node):
             PointCloud2,
             str(self.get_parameter('input_cloud_topic').value),
             self._cloud_cb,
-            qos_profile_sensor_data,
+            QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT),
         )
 
         self.get_logger().info(
@@ -162,16 +227,10 @@ class ImuTiltCloudFilter(Node):
         max_height = float(self.get_parameter('max_obstacle_height').value)
         min_range = float(self.get_parameter('min_range').value)
         max_range = float(self.get_parameter('max_range').value)
+        clearing_range = float(self.get_parameter('clearing_max_range').value)
         step = max(1, int(self.get_parameter('downsample_step').value))
         max_points = int(self.get_parameter('max_points').value)
 
-        endian = '>' if msg.is_bigendian else '<'
-        unpack_x = struct.Struct(endian + 'f').unpack_from
-        unpack_y = struct.Struct(endian + 'f').unpack_from
-        unpack_z = struct.Struct(endian + 'f').unpack_from
-        x_offset = field_offsets['x'].offset
-        y_offset = field_offsets['y'].offset
-        z_offset = field_offsets['z'].offset
         total_points = msg.width * msg.height
         if max_points > 0:
             step = max(step, math.ceil(total_points / max_points))
@@ -181,35 +240,40 @@ class ImuTiltCloudFilter(Node):
         cr = math.cos(roll)
         sr = math.sin(roll)
 
-        obstacle_points = []
-        for index in range(0, total_points, step):
-            row = index // msg.width
-            col = index - row * msg.width
-            offset = row * msg.row_step + col * msg.point_step
-            x = unpack_x(msg.data, offset + x_offset)[0]
-            y = unpack_y(msg.data, offset + y_offset)[0]
-            z = unpack_z(msg.data, offset + z_offset)[0]
-            if not (math.isfinite(x) and math.isfinite(y) and math.isfinite(z)):
-                continue
-
-            bx, by, bz = _mat_vec(tf_rot, x, y, z)
-            bx += tf_trans.x
-            by += tf_trans.y
-            bz += tf_trans.z
-
-            planar_range = math.hypot(bx, by)
-            if planar_range < min_range or planar_range > max_range:
-                continue
-
-            level_z = (-sp * bx) + (cp * sr * by) + (cp * cr * bz)
-            height = level_z - ground_height
-            if height < min_height or height > max_height:
-                continue
-
-            obstacle_points.append((bx, by, bz))
+        # Read strided XYZ fields in one operation, including organised clouds
+        # with row padding and either byte order. Only copy sampled points.
+        endian = '>' if msg.is_bigendian else '<'
+        dtype = np.dtype({'names': ['x', 'y', 'z'],
+                          'formats': [endian + 'f4'] * 3,
+                          'offsets': [field_offsets[name].offset for name in ('x', 'y', 'z')],
+                          'itemsize': msg.point_step})
+        records = np.ndarray((msg.height, msg.width), dtype=dtype, buffer=msg.data,
+                             strides=(msg.row_step, msg.point_step))
+        indices = np.arange(0, total_points, step)
+        sampled = records[indices // msg.width, indices % msg.width] if total_points else records.ravel()
+        x, y, z = [sampled[name].astype(np.float64) for name in ('x', 'y', 'z')]
+        finite = np.isfinite(x) & np.isfinite(y) & np.isfinite(z)
+        x, y, z = x[finite], y[finite], z[finite]
+        bx = tf_rot[0][0] * x + tf_rot[0][1] * y + tf_rot[0][2] * z + tf_trans.x
+        by = tf_rot[1][0] * x + tf_rot[1][1] * y + tf_rot[1][2] * z + tf_trans.y
+        bz = tf_rot[2][0] * x + tf_rot[2][1] * y + tf_rot[2][2] * z + tf_trans.z
+        planar_range = np.hypot(bx, by)
+        level_z = (-sp * bx) + (cp * sr * by) + (cp * cr * bz)
+        points = np.column_stack((bx, by, bz))
+        in_range = planar_range >= min_range
+        # Ground returns stay available for ray clearing, independently of the
+        # obstacle-height slider.
+        clearing_points = points[in_range & (planar_range <= clearing_range)]
+        marking_range = in_range & (planar_range <= max_range)
+        height = _height_above_terrain(
+            bx[marking_range], by[marking_range], level_z[marking_range], bz[marking_range],
+            ground_height, self.get_parameter('terrain_max_slope_degrees').value,
+        )
+        obstacle_points = points[marking_range][(height >= min_height) & (height <= max_height)]
 
         out = self._create_xyz_cloud(msg.header, obstacle_points)
         self._pub.publish(out)
+        self._clearing_pub.publish(self._create_xyz_cloud(msg.header, clearing_points))
 
     def _create_xyz_cloud(self, header, points):
         out = PointCloud2()
@@ -226,10 +290,7 @@ class ImuTiltCloudFilter(Node):
         out.point_step = 12
         out.row_step = out.point_step * out.width
         out.is_dense = True
-        data = bytearray(out.row_step)
-        pack = struct.Struct('<fff').pack_into
-        for index, point in enumerate(points):
-            pack(data, index * out.point_step, *point)
+        data = np.asarray(points, dtype='<f4').reshape(-1, 3).tobytes()
         out.data = array('B', data)
         return out
 

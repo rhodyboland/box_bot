@@ -26,8 +26,14 @@ if(BUILD_TESTING)
   ament_add_pytest_test(gnss_migration test/test_gnss_migration.py)
   ament_add_pytest_test(hub test/test_hub.py)
   ament_add_pytest_test(console_logging test/test_console_logging.py)
+  ament_add_pytest_test(pause_resume_navigation test/test_pause_resume_navigation.py TIMEOUT 60)
+  ament_add_pytest_test(wayline_planner test/test_wayline_planner.py TIMEOUT 45)
+  ament_add_pytest_test(ui_tuning test/test_ui_tuning.py TIMEOUT 45)
+  ament_add_pytest_test(traction_recovery test/test_traction_recovery.py)
+  ament_add_pytest_test(traction_monitor test/test_traction_monitor.py)
   ament_add_pytest_test(ground_filter test/test_ground_filter.py)
-  ament_add_pytest_test(boxbot_ui test/test_boxbot_ui.py TIMEOUT 60)
+  ament_add_pytest_test(localization_slip test/test_localization_slip.py TIMEOUT 30)
+  ament_add_pytest_test(boxbot_ui test/test_boxbot_ui.py TIMEOUT 90)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
   # uncomment the line when a copyright and license is not present in all source files
@@ -46,6 +52,7 @@ install(
 install(
   PROGRAMS
     scripts/boxbot_ui.py
+    scripts/hoverboard_wait_ready.py
     scripts/esp32_hub.py
     scripts/gnss_navsat.py
     scripts/gps_status_logger.py
@@ -56,6 +63,6 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(FILES scripts/gnss_helpers.py scripts/hub_protocol.py scripts/ui_http.py DESTINATION lib/${PROJECT_NAME})
+install(FILES scripts/tuning_settings.py scripts/ui_tuning.py scripts/traction_recovery.py scripts/hub_power.py scripts/traction_monitor.py scripts/gnss_helpers.py scripts/hub_protocol.py scripts/ui_http.py DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

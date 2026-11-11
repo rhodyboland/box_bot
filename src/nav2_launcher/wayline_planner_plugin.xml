@@ -1,0 +1,5 @@
+<library path="boxbot_wayline_planner">
+  <class type="nav2_launcher::WaylinePlanner" base_class_type="nav2_core::GlobalPlanner">
+    <description>NavFn with a soft cost for leaving a reference segment.</description>
+  </class>
+</library>

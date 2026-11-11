@@ -20,9 +20,9 @@
   <main>
     <section class="map-area" aria-label="Navigation map">
       <div id="map"></div>
-      <div class="map-toolbar"><button id="follow" class="active">◎ &nbsp;Follow robot</button><button id="pick">＋ &nbsp;Set target</button><button id="fit">↗ &nbsp;Show path</button></div>
+      <div class="map-toolbar"><button id="follow" class="active">◎ &nbsp;Follow robot</button><button id="pick">＋ &nbsp;Set target</button><button id="route-pick">＋ &nbsp;Waypoints</button><button id="fit">↗ &nbsp;Show paths</button></div>
       <div id="map-notice" class="map-notice">Waiting for localization and GPS map alignment…</div>
-      <div class="map-legend"><span><i class="robot-key"></i> Robot</span><span><i class="path-key"></i> Planned path</span><span><i class="obstacle-key"></i> Obstacles</span><label><input type="checkbox" id="show-obstacles" checked> Show costmap</label></div>
+      <div class="map-legend"><span><i class="robot-key"></i> Robot</span><span><i class="path-key"></i> Planned path</span><span><i class="trail-key"></i> Travelled track</span><span><i class="obstacle-key"></i> Obstacles</span><label><input type="checkbox" id="show-obstacles" checked> Show costmap</label></div>
       <div class="pose-strip"><div><small>POSITION</small><strong id="position">—</strong></div><div><small>HEADING</small><strong id="bearing">—</strong></div><div><small>SPEED</small><strong id="speed">—</strong></div><div><small>MAP FRAME</small><strong>map / WGS84</strong></div></div>
     </section>
     <aside>
@@ -39,6 +39,52 @@
         </div>
         <button id="choose-target" class="secondary">Choose a target on the map</button>
       </section>
+      <section class="panel traction-panel">
+        <div class="section-title"><h2>Traction monitor</h2><span id="traction-badge" class="badge">WAITING</span></div>
+        <p id="traction-state" class="hint">Waiting for wheel, gyro and GNSS measurements.</p>
+        <dl class="traction-metrics">
+          <div><dt>Command linear</dt><dd id="traction-command-vx">—</dd></div>
+          <div><dt>Wheel linear</dt><dd id="traction-wheel-vx">—</dd></div>
+          <div><dt>GNSS ground speed</dt><dd id="traction-gps-speed">—</dd></div>
+          <div><dt>GNSS speed accuracy</dt><dd id="traction-gps-accuracy">—</dd></div>
+          <div><dt>Command turn</dt><dd id="traction-command-wz">—</dd></div>
+          <div><dt>Wheel turn</dt><dd id="traction-wheel-wz">—</dd></div>
+          <div><dt>Gyro turn</dt><dd id="traction-gyro-wz">—</dd></div>
+        </dl>
+        <p class="hint">Read-only assessment · 2 s accumulated evidence · brief gaps decay instead of resetting</p>
+        <label class="preview-toggle"><input type="checkbox" id="traction-recovery-enabled"> Automatic slip recovery</label>
+        <div class="filter-height-controls"><label for="recovery-attempts">Consecutive recovery limit</label>
+          <input id="recovery-attempts" type="number" min="0" max="20" step="1" value="2">
+          <button id="apply-recovery-attempts" class="secondary">Apply</button></div>
+        <p class="hint">Counter resets after 0.5 m of GNSS progress. Set 0 for unlimited attempts.</p>
+        <p id="traction-recovery-status" class="hint">Waiting for recovery settings.</p>
+        <p id="traction-recovery-description" class="hint">After confirmation + 2 s · 0.3 m at 0.4 m/s · stored-map clearance and Nav2 collision checks</p>
+        <p id="traction-log" class="hint traction-log"></p>
+      </section>
+      <section class="panel route-panel">
+        <div class="section-title"><h2>Waypoint route</h2><span id="route-count" class="badge">0 POINTS</span></div>
+        <p class="hint">Enable Waypoints, then click the map in travel order. Drag numbered pins to adjust. Headings are compass degrees.</p>
+        <ol id="waypoint-list" class="waypoint-list"></ol>
+        <div class="route-actions"><button id="route-undo" class="secondary">Undo last</button><button id="route-clear" class="secondary">Clear route</button></div>
+        <button id="route-send" class="primary" disabled>Follow waypoint route ↗</button>
+        <p id="route-progress" class="hint">Up to 50 waypoints · 300 m per leg · stops on a failed waypoint</p>
+        <label class="track-toggle"><input type="checkbox" id="show-trail" checked> Show travelled track</label>
+        <button id="clear-trail" class="secondary">Clear travelled track</button>
+        <p class="hint">Track records this ROS UI session, sampled at 15 cm movement intervals, up to twice per second.</p>
+      </section>
+      <section class="panel camera-panel">
+        <div class="section-title"><h2>Camera preview</h2><label class="preview-toggle"><input id="show-camera" type="checkbox"> Live</label></div>
+        <img id="camera-preview" alt="Live forward-facing D455 colour camera" hidden>
+        <p id="camera-preview-status" class="hint">Preview off · 320 px · 2 fps when enabled</p>
+      </section>
+      <section class="panel ground-filter-panel">
+        <div class="section-title"><h2>Ground filter</h2><span id="filter-live" class="badge">WAITING</span></div>
+        <label for="obstacle-height">Minimum obstacle height above local ground</label>
+        <div class="filter-height-controls"><input id="obstacle-height" type="range" min="5" max="50" step="1" value="15" disabled><output id="obstacle-height-value" for="obstacle-height">15 cm</output></div>
+        <button id="apply-filter" class="primary" disabled>Apply height threshold</button>
+        <p id="filter-status" class="hint">Waiting for the live ground filter settings.</p>
+        <p class="hint">Higher values ignore taller grass and low objects. Changes apply live and reset on the next bringup.</p>
+      </section>
       <section class="panel battery-panel">
         <div class="section-title"><h2>Battery</h2><span id="battery-badge" class="badge">WAITING</span></div>
         <div class="battery-main"><strong id="battery-percent">—<span>%</span></strong><span id="battery-direction">Awaiting BMS</span></div>
@@ -51,6 +97,22 @@
         <div id="systems"></div>
       </section>
       <section class="panel events-panel"><div class="section-title"><h2>Activity</h2><span id="system-load" class="subtle">—</span></div><ol id="events"><li>Connecting to Boxbot…</li></ol></section>
+      <section class="panel tuning-panel">
+        <div class="section-title"><h2>Navigation tuning</h2><span id="tuning-badge" class="badge">WAITING</span></div>
+        <p class="hint">Try settings while stopped. They stay active for this bring-up. Make permanent saves confirmed live values for future starts.</p>
+        <p class="hint">Nav2 can choose a lower speed for the path and nearby obstacles.</p>
+        <p id="tuning-speeds" class="hint"></p>
+        <div id="tuning-fields" class="tuning-fields"></div>
+        <p class="hint">A heading tolerance near 180° accepts any final heading at a waypoint.</p>
+        <div class="tuning-actions">
+          <button id="tuning-try">Try settings</button>
+          <button id="tuning-save" class="secondary">Make permanent</button>
+          <button id="tuning-load" class="secondary">Load saved</button>
+          <button id="tuning-reset" class="secondary">Reset form</button>
+        </div>
+        <p id="tuning-status" class="hint" role="status"></p>
+        <p id="tuning-file" class="hint traction-log"></p>
+      </section>
       <footer>BOXBOT UI <span>LIVE ROS TELEMETRY</span></footer>
     </aside>
   </main>

@@ -7,7 +7,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction
 from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import LoadComposableNodes, Node, PushROSNamespace
+from launch_ros.actions import Node, PushROSNamespace
+from nav2_launcher.recoverable_components import RecoverableLoadComposableNodes
 from launch_ros.descriptions import ComposableNode, ParameterFile
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -52,18 +53,18 @@ def generate_launch_description():
     nodes = [Node(
         package=package, executable=name, name=name,
         parameters=[configured_params], remappings=tf_remaps + remaps,
-        output='screen', respawn=LaunchConfiguration('use_respawn'), respawn_delay=2.0,
+        output='screen', sigterm_timeout='15', respawn=LaunchConfiguration('use_respawn'), respawn_delay=2.0,
         arguments=['--ros-args', '--log-level', log_level],
-    ) for package, name, _, remaps in servers]
+    ) for package, name, _, remaps in servers if name != "waypoint_follower"]
     nodes.append(Node(
         package='nav2_lifecycle_manager', executable='lifecycle_manager',
         name='lifecycle_manager_navigation', parameters=[lifecycle_parameters],
-        output='screen', arguments=['--ros-args', '--log-level', log_level],
+        output='screen', sigterm_timeout='15', arguments=['--ros-args', '--log-level', log_level],
     ))
     components = [ComposableNode(
         package=package, plugin=plugin, name=name, namespace=namespace,
         parameters=[configured_params], remappings=tf_remaps + remaps,
-    ) for package, name, plugin, remaps in servers]
+    ) for package, name, plugin, remaps in servers if name != "waypoint_follower"]
     components.append(ComposableNode(
         package='nav2_lifecycle_manager', plugin='nav2_lifecycle_manager::LifecycleManager',
         name='lifecycle_manager_navigation', namespace=namespace,
@@ -84,9 +85,16 @@ def generate_launch_description():
         DeclareLaunchArgument('default_nav_to_pose_bt_xml', default_value=PathJoinSubstitution([
             FindPackageShare('nav2_bt_navigator'), 'behavior_trees',
             'navigate_to_pose_w_replanning_and_recovery.xml'])),
+        # The patched waypoint executable keeps its result callback nonblocking.
+        # Run it separately in both modes so the shared library uses that fix.
+        GroupAction(actions=[PushROSNamespace(namespace), Node(
+            package='nav2_launcher', executable='boxbot_waypoint_follower', name='waypoint_follower',
+            parameters=[configured_params], remappings=tf_remaps,
+            output='screen', sigterm_timeout='15',
+            arguments=['--ros-args', '--log-level', log_level])]),
         GroupAction(condition=UnlessCondition(composition), actions=[
             PushROSNamespace(namespace), *nodes]),
-        LoadComposableNodes(
+        RecoverableLoadComposableNodes(
             condition=IfCondition(composition),
             target_container=[namespace, '/', LaunchConfiguration('container_name')],
             composable_node_descriptions=components),

@@ -10,6 +10,7 @@ import tempfile
 import yaml
 
 import rclpy
+from ament_index_python.packages import get_package_prefix
 from lifecycle_msgs.srv import ChangeState
 from rcl_interfaces.srv import GetParameters, ListParameters
 from rclpy.parameter import parameter_value_to_python
@@ -50,7 +51,8 @@ def main():
                 command, stdout=log, stderr=subprocess.STDOUT, start_new_session=True))
 
         if args.composition:
-            start(['/opt/ros/lyrical/lib/rclcpp_components/component_container_isolated',
+            start(['/opt/ros/lyrical/lib/rclcpp_components/component_container',
+                   '--executor-type', 'single-threaded', '--isolated',
                    '--ros-args', '--params-file', str(params), '-r', '__node:=nav2_container',
                    '-r', f'__ns:=/{namespace}'], 'components')
             start(['ros2', 'launch', 'nav2_launcher', 'nav2_launch.py',
@@ -58,7 +60,9 @@ def main():
                    'autostart:=false', f'params_file:={args.params.resolve()}'], 'launch')
         else:
             for package, executable in packages:
-                start([f'/opt/ros/lyrical/lib/{package}/{executable}', '--ros-args',
+                entry = (str(Path(get_package_prefix('nav2_launcher')) / 'lib/nav2_launcher/boxbot_waypoint_follower')
+                         if executable == 'waypoint_follower' else f'/opt/ros/lyrical/lib/{package}/{executable}')
+                start([entry, '--ros-args',
                        '--params-file', str(params), '-r', f'__ns:=/{namespace}'], executable)
 
         def failure(name, reason):
@@ -107,7 +111,7 @@ def main():
                     if 'observation_sources' in settings:
                         expected_values[f'{layer}.observation_sources'] = settings['observation_sources']
                         for source in settings['observation_sources'].split():
-                            for key in ('topic', 'marking', 'clearing', 'observation_persistence'):
+                            for key in ('topic', 'sensor_frame', 'marking', 'clearing', 'observation_persistence', 'expected_update_rate'):
                                 if key in settings[source]:
                                     expected_values[f'{layer}.{source}.{key}'] = settings[source][key]
                     if 'num_threads' in settings:

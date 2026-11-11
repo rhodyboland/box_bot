@@ -211,3 +211,20 @@ class TestGnssMigration(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def test_ntrip_main_handles_normal_shutdown_exceptions():
+    from unittest.mock import MagicMock
+    from rclpy.executors import ExternalShutdownException
+    import rtk2go_ntrip_client as ntrip
+
+    for exception in (KeyboardInterrupt, ExternalShutdownException):
+        node = MagicMock()
+        with patch.object(ntrip.rclpy, 'init'), \
+                patch.object(ntrip, 'Rtk2GoNtripClient', return_value=node), \
+                patch.object(ntrip.rclpy, 'spin', side_effect=exception), \
+                patch.object(ntrip.rclpy, 'ok', return_value=False), \
+                patch.object(ntrip.rclpy, 'shutdown') as shutdown:
+            ntrip.main()
+        node.destroy_node.assert_called_once()
+        shutdown.assert_not_called()
