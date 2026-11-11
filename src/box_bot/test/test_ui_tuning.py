@@ -159,13 +159,15 @@ def test_runtime_http_trial_save_rollback_and_motion_gate(config):
         assert http('POST', '/api/tuning', dict(mode='try', values=values))[0] == 403
         assert http('POST', '/api/tuning', dict(mode='try', values={}), token)[0] == 400
         assert http('POST', '/api/tuning', dict(mode='try', values=values), token)[0] == 202
-        until(lambda: not state()['tuning']['busy'] and state()['tuning']['values']['cruise_speed'] == .6)
+        until(lambda: not state()['tuning']['busy'] and
+              state()['tuning']['values'] == pytest.approx(values))
         assert config.read_bytes() == original
         assert list(nodes['velocity_smoother'].get_parameter('min_velocity').value) == [-.6, 0., -.9]
         assert ui.recovery.speed == .6
         live = state()['tuning']
         assert http('POST', '/api/tuning', dict(mode='save', values=live['values'], revision=live['saved']['revision']), token)[0] == 202
-        until(lambda: not state()['tuning']['busy'] and state()['tuning']['saved']['values']['cruise_speed'] == .6)
+        until(lambda: not state()['tuning']['busy'] and
+              state()['tuning']['saved']['values'] == pytest.approx(values))
         permanent = config.read_bytes()
         flags['reject'] = True
         assert http('POST', '/api/tuning', dict(mode='try', values=dict(values, cruise_speed=.9)), token)[0] == 202
